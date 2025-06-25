@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const GymRoutineApp());
@@ -17,7 +18,60 @@ class GymRoutineApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white70),
         ),
       ),
-      home: const GymRoutineHome(),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.fitness_center, size: 100, color: Colors.redAccent),
+              const SizedBox(height: 20),
+              const Text(
+                "Welcome to RedFit Gym Routine",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GymRoutineHome()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  "START",
+                  style: TextStyle(fontSize: 18, letterSpacing: 2, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -25,15 +79,7 @@ class GymRoutineApp extends StatelessWidget {
 class GymRoutineHome extends StatelessWidget {
   const GymRoutineHome({super.key});
 
-  final List<String> days = const [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
+  final List<String> days = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +102,7 @@ class GymRoutineHome extends StatelessWidget {
             RoutineCardList(routine: thursdayRoutine),
             RoutineCardList(routine: fridayRoutine),
             RoutineCardList(routine: saturdayRoutine),
-            RoutineCardList(routine: sundayRoutine),
+            RoutineCardList(routine: sundayRoutine, allowTimer: false),
           ],
         ),
       ),
@@ -66,7 +112,8 @@ class GymRoutineHome extends StatelessWidget {
 
 class RoutineCardList extends StatelessWidget {
   final List<String> routine;
-  const RoutineCardList({super.key, required this.routine});
+  final bool allowTimer;
+  const RoutineCardList({super.key, required this.routine, this.allowTimer = true});
 
   @override
   Widget build(BuildContext context) {
@@ -86,9 +133,166 @@ class RoutineCardList extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
             ),
             leading: const Icon(Icons.fitness_center, color: Colors.redAccent),
+            onTap: () async {
+              if (!allowTimer) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("🧘 It's a rest day! No timer needed."),
+                    backgroundColor: Colors.blueGrey,
+                  ),
+                );
+                return;
+              }
+              final duration = await showDialog<int>(
+                context: context,
+                builder: (context) {
+                  int selectedSeconds = 30;
+                  return AlertDialog(
+                    backgroundColor: const Color(0xFF1F1F1F),
+                    title: const Text("⏱️ Set Timer", style: TextStyle(color: Colors.redAccent)),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("Enter duration in seconds:", style: TextStyle(color: Colors.white)),
+                        const SizedBox(height: 10),
+                        StatefulBuilder(
+                          builder: (context, setState) {
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: Slider(
+                                    value: selectedSeconds.toDouble(),
+                                    min: 10,
+                                    max: 180,
+                                    divisions: 17,
+                                    label: "$selectedSeconds sec",
+                                    activeColor: Colors.redAccent,
+                                    onChanged: (val) => setState(() => selectedSeconds = val.toInt()),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(selectedSeconds),
+                        child: const Text("Start", style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  );
+                },
+              );
+              if (duration != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RoutineDetailPage(
+                      exercise: routine[index],
+                      durationSeconds: duration,
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         );
       },
+    );
+  }
+}
+
+class RoutineDetailPage extends StatefulWidget {
+  final String exercise;
+  final int durationSeconds;
+  const RoutineDetailPage({super.key, required this.exercise, required this.durationSeconds});
+
+  @override
+  State<RoutineDetailPage> createState() => _RoutineDetailPageState();
+}
+
+class _RoutineDetailPageState extends State<RoutineDetailPage> {
+  late int _remainingSeconds;
+  Timer? _timer;
+  bool _completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingSeconds = widget.durationSeconds;
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _completed = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("✅ Time's up! Great job!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    final timeLeft = "$minutes:${seconds.toString().padLeft(2, '0')}";
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("🏋️ Exercise Timer"),
+        backgroundColor: Colors.black,
+      ),
+      backgroundColor: const Color(0xFF121212),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _completed
+                  ? const Icon(Icons.check_circle, size: 100, color: Colors.green)
+                  : const Icon(Icons.timer, size: 100, color: Colors.redAccent),
+              const SizedBox(height: 20),
+              Text(
+                widget.exercise,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                _completed ? "✅ Completed!" : "⏱️ Time Left: $timeLeft",
+                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -149,7 +353,4 @@ const saturdayRoutine = [
 
 const sundayRoutine = [
   "Rest Day / Light Recovery",
-  "Brisk walk – 20 mins",
-  "Light foam rolling",
-  "Hydrate & stretch",
 ];
