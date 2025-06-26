@@ -343,6 +343,52 @@ class _GymDashboardState extends State<GymDashboard> {
     final textColor = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
+      appBar: started
+          ? AppBar(
+              title: isRestDay
+                  ? Text(
+                      'REST DAY',
+                      style: GoogleFonts.robotoCondensed(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    )
+                  : Text(
+                      'Daily Fit Tracker',
+                      style: GoogleFonts.robotoCondensed(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+              centerTitle: false,
+              backgroundColor: primaryColor,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    isDark ? Icons.light_mode : Icons.dark_mode,
+                    color: Colors.white,
+                  ),
+                  tooltip: isDark
+                      ? 'Switch to Light Mode'
+                      : 'Switch to Dark Mode',
+                  onPressed: widget.onToggleTheme,
+                ),
+              ],
+              systemOverlayStyle:
+                  Theme.of(context).brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light.copyWith(
+                      systemNavigationBarColor: primaryColor,
+                    )
+                  : SystemUiOverlayStyle.dark.copyWith(
+                      systemNavigationBarColor: primaryColor,
+                    ),
+            )
+          : null,
       body: Stack(
         children: [
           Container(
@@ -353,50 +399,6 @@ class _GymDashboardState extends State<GymDashboard> {
                 ? ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      AppBar(
-                        title: isRestDay
-                            ? Text(
-                                'REST DAY',
-                                style: GoogleFonts.robotoCondensed(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 2,
-                                ),
-                              )
-                            : Text(
-                                'Daily Fit Tracker',
-                                style: GoogleFonts.robotoCondensed(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                        centerTitle: false,
-                        backgroundColor: primaryColor,
-                        elevation: 0,
-                        actions: [
-                          IconButton(
-                            icon: Icon(
-                              isDark ? Icons.light_mode : Icons.dark_mode,
-                              color: Colors.white,
-                            ),
-                            tooltip: isDark
-                                ? 'Switch to Light Mode'
-                                : 'Switch to Dark Mode',
-                            onPressed: widget.onToggleTheme,
-                          ),
-                        ],
-                        systemOverlayStyle:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? SystemUiOverlayStyle.light.copyWith(
-                                systemNavigationBarColor: primaryColor,
-                              )
-                            : SystemUiOverlayStyle.dark.copyWith(
-                                systemNavigationBarColor: primaryColor,
-                              ),
-                      ),
                       // Select Day row
                       Align(
                         alignment: Alignment.centerLeft,
