@@ -1,71 +1,246 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-void main() => runApp(const GymRoutineApp());
+void main() {
+  runApp(const GymDashboardApp());
+}
 
-class GymRoutineApp extends StatelessWidget {
-  const GymRoutineApp({super.key});
+class GymDashboardApp extends StatelessWidget {
+  const GymDashboardApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Gym Routine Dashboard',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        primaryColor: Colors.redAccent,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
+        textTheme: GoogleFonts.robotoCondensedTextTheme(
+          ThemeData.dark().textTheme,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          elevation: 0,
+        ),
+        colorScheme: const ColorScheme.dark().copyWith(
+          primary: Color(0xFFFF2D2D),
         ),
       ),
-      home: const HomePage(),
+      home: const GymDashboard(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class GymDashboard extends StatefulWidget {
+  const GymDashboard({super.key});
+
+  @override
+  State<GymDashboard> createState() => _GymDashboardState();
+}
+
+class _GymDashboardState extends State<GymDashboard> {
+  bool started = false;
+  String selectedDay = _getTodayName();
+
+  static String _getTodayName() {
+    final now = DateTime.now().weekday;
+    return [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+    ][now - 1];
+  }
+
+  final Map<String, List<Map<String, dynamic>>> weeklyRoutine = const {
+    'Monday': [
+      {'label': "Warm-up: 10 min treadmill", 'icon': Icons.directions_run},
+      {'label': "Bench Press - 4 Sets", 'icon': Icons.fitness_center},
+      {'label': "Tricep Pushdowns - 3 Sets", 'icon': Icons.cable},
+    ],
+    'Tuesday': [
+      {'label': "Pull-ups - 3 Sets", 'icon': Icons.fitness_center},
+      {'label': "Deadlifts - 4 Sets", 'icon': Icons.sports_kabaddi},
+      {'label': "Barbell Rows - 3 Sets", 'icon': Icons.cable},
+    ],
+    'Wednesday': [
+      {'label': "Squats - 4 Sets", 'icon': Icons.directions_run},
+      {'label': "Lunges - 3 Sets", 'icon': Icons.directions_walk},
+      {'label': "Leg Curls - 3 Sets", 'icon': Icons.fitness_center},
+    ],
+    'Thursday': [
+      {'label': "Shoulder Press - 4 Sets", 'icon': Icons.fitness_center},
+      {'label': "Lateral Raises - 3 Sets", 'icon': Icons.trending_up},
+      {'label': "Front Raises - 3 Sets", 'icon': Icons.trending_up},
+    ],
+    'Friday': [
+      {'label': "Chest Fly - 4 Sets", 'icon': Icons.sports_mma},
+      {'label': "Pushups - 3 Sets", 'icon': Icons.accessibility},
+      {'label': "Tricep Dips - 3 Sets", 'icon': Icons.accessibility},
+    ],
+    'Saturday': [
+      {'label': "Cardio: 20 min", 'icon': Icons.directions_run},
+      {'label': "Abs Workout - 3 Sets", 'icon': Icons.fitness_center},
+      {'label': "Planks - 3 Sets", 'icon': Icons.accessibility},
+    ],
+    'Sunday': [
+      {'label': "Rest & Recovery", 'icon': Icons.spa},
+      {'label': "Stretching", 'icon': Icons.self_improvement},
+      {'label': "Sauna", 'icon': Icons.hot_tub},
+    ],
+  };
 
   @override
   Widget build(BuildContext context) {
+    final routine = weeklyRoutine[selectedDay] ?? [];
+
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1B1B1B), Color(0xFF121212)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: started
+            ? ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            AppBar(
+              title: Text(
+                'DAILY GYM ROUTINE',
+                style: GoogleFonts.robotoCondensed(
+                  color: const Color(0xFFFF2D2D),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              centerTitle: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Select Day:",
+                  style: GoogleFonts.robotoCondensed(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                DropdownButton<String>(
+                  dropdownColor: const Color(0xFF2D2D2D),
+                  value: selectedDay,
+                  iconEnabledColor: const Color(0xFFFF2D2D),
+                  style: const TextStyle(color: Colors.white),
+                  underline: Container(
+                    height: 2,
+                    color: const Color(0xFFFF2D2D),
+                  ),
+                  items: weeklyRoutine.keys.map((day) {
+                    return DropdownMenuItem<String>(
+                      value: day,
+                      child: Text(day, style: const TextStyle(color: Colors.white)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newDay) {
+                    setState(() {
+                      selectedDay = newDay!;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "$selectedDay Routine",
+              style: GoogleFonts.robotoCondensed(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF2D2D),
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...routine.map((exercise) {
+              return RoutineTile(
+                label: exercise['label'],
+                icon: exercise['icon'],
+              );
+            }),
+            const SizedBox(height: 30),
+            Text(
+              "Fitness Tracker",
+              style: GoogleFonts.robotoCondensed(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF2D2D),
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: const [
+                FitnessStatCard(label: "Steps", value: "8,420", icon: Icons.directions_walk),
+                FitnessStatCard(label: "Calories", value: "560 kcal", icon: Icons.local_fire_department),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: const [
+                FitnessStatCard(label: "Water", value: "2.0 L", icon: Icons.water_drop),
+                FitnessStatCard(label: "Workout", value: "1h 15m", icon: Icons.timer),
+              ],
+            ),
+          ],
+        )
+            : Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.fitness_center, size: 100, color: Colors.redAccent),
+              Icon(Icons.fitness_center, color: Colors.redAccent, size: 100),
               const SizedBox(height: 20),
-              const Text(
-                "Welcome to RedFit Gym Routine",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              Text(
+                "Ready to Crush It?",
+                style: GoogleFonts.bebasNeue(
+                  fontSize: 36,
                   color: Colors.white,
                   letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Your daily gym plan awaits.",
+                style: GoogleFonts.robotoCondensed(
+                  fontSize: 16,
+                  color: Colors.grey[400],
                 ),
               ),
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const GymRoutineHome()),
-                  );
+                  setState(() {
+                    started = true;
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  elevation: 10,
+                  shadowColor: Colors.redAccent.withOpacity(0.5),
                 ),
                 child: const Text(
                   "START",
-                  style: TextStyle(fontSize: 18, letterSpacing: 2, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 22,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -76,281 +251,103 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class GymRoutineHome extends StatelessWidget {
-  const GymRoutineHome({super.key});
+class RoutineTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
 
-  final List<String> days = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const RoutineTile({super.key, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: days.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Weekly Gym Routine'),
-          backgroundColor: Colors.black,
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: days.map((day) => Tab(text: day)).toList(),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFF2D2D), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(2, 4),
           ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 26),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.robotoCondensed(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FitnessStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const FitnessStatCard({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFF2D2D), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(2, 4),
+            ),
+          ],
         ),
-        body: TabBarView(
+        child: Column(
           children: [
-            RoutineCardList(routine: mondayRoutine),
-            RoutineCardList(routine: tuesdayRoutine),
-            RoutineCardList(routine: wednesdayRoutine),
-            RoutineCardList(routine: thursdayRoutine),
-            RoutineCardList(routine: fridayRoutine),
-            RoutineCardList(routine: saturdayRoutine),
-            RoutineCardList(routine: sundayRoutine, allowTimer: false),
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: GoogleFonts.robotoCondensed(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              label.toUpperCase(),
+              style: GoogleFonts.robotoCondensed(
+                color: const Color(0xFFFF2D2D),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-class RoutineCardList extends StatelessWidget {
-  final List<String> routine;
-  final bool allowTimer;
-  const RoutineCardList({super.key, required this.routine, this.allowTimer = true});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: routine.length,
-      itemBuilder: (context, index) {
-        return Card(
-          color: const Color(0xFF1F1F1F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: ListTile(
-            title: Text(
-              routine[index],
-              style: const TextStyle(color: Colors.white),
-            ),
-            leading: const Icon(Icons.fitness_center, color: Colors.redAccent),
-            onTap: () async {
-              if (!allowTimer) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("🧘 It's a rest day! No timer needed."),
-                    backgroundColor: Colors.blueGrey,
-                  ),
-                );
-                return;
-              }
-              final duration = await showDialog<int>(
-                context: context,
-                builder: (context) {
-                  int selectedSeconds = 30;
-                  return AlertDialog(
-                    backgroundColor: const Color(0xFF1F1F1F),
-                    title: const Text("⏱️ Set Timer", style: TextStyle(color: Colors.redAccent)),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text("Enter duration in seconds:", style: TextStyle(color: Colors.white)),
-                        const SizedBox(height: 10),
-                        StatefulBuilder(
-                          builder: (context, setState) {
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: Slider(
-                                    value: selectedSeconds.toDouble(),
-                                    min: 10,
-                                    max: 180,
-                                    divisions: 17,
-                                    label: "$selectedSeconds sec",
-                                    activeColor: Colors.redAccent,
-                                    onChanged: (val) => setState(() => selectedSeconds = val.toInt()),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(selectedSeconds),
-                        child: const Text("Start", style: TextStyle(color: Colors.redAccent)),
-                      ),
-                    ],
-                  );
-                },
-              );
-              if (duration != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RoutineDetailPage(
-                      exercise: routine[index],
-                      durationSeconds: duration,
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-class RoutineDetailPage extends StatefulWidget {
-  final String exercise;
-  final int durationSeconds;
-  const RoutineDetailPage({super.key, required this.exercise, required this.durationSeconds});
-
-  @override
-  State<RoutineDetailPage> createState() => _RoutineDetailPageState();
-}
-
-class _RoutineDetailPageState extends State<RoutineDetailPage> {
-  late int _remainingSeconds;
-  Timer? _timer;
-  bool _completed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _remainingSeconds = widget.durationSeconds;
-    _startTimer();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-        setState(() {
-          _completed = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Time's up! Great job!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final minutes = _remainingSeconds ~/ 60;
-    final seconds = _remainingSeconds % 60;
-    final timeLeft = "$minutes:${seconds.toString().padLeft(2, '0')}";
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("🏋️ Exercise Timer"),
-        backgroundColor: Colors.black,
-      ),
-      backgroundColor: const Color(0xFF121212),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _completed
-                  ? const Icon(Icons.check_circle, size: 100, color: Colors.green)
-                  : const Icon(Icons.timer, size: 100, color: Colors.redAccent),
-              const SizedBox(height: 20),
-              Text(
-                widget.exercise,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Text(
-                _completed ? "✅ Completed!" : "⏱️ Time Left: $timeLeft",
-                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-const mondayRoutine = [
-  "Warm-up: Treadmill – 10 mins",
-  "Bench Press – 4x10",
-  "Incline Dumbbell Press – 3x12",
-  "Chest Fly Machine – 3x12",
-  "Triceps Dips – 3x10",
-  "Triceps Pushdown – 3x12",
-];
-
-const tuesdayRoutine = [
-  "Warm-up: Rowing – 10 mins",
-  "Lat Pulldown – 4x10",
-  "Seated Row – 3x10",
-  "Dumbbell Bicep Curls – 3x12",
-  "Hammer Curls – 3x10",
-  "Face Pulls – 3x15",
-];
-
-const wednesdayRoutine = [
-  "Warm-up: Leg Swings & Squats",
-  "Barbell Squats – 4x8",
-  "Leg Press – 3x12",
-  "Romanian Deadlift – 3x10",
-  "Calf Raises – 3x15",
-  "Planks – 3 sets (1 min)",
-  "Leg Raises – 3x15",
-];
-
-const thursdayRoutine = [
-  "Active Recovery / Cardio",
-  "Walk 30 mins or Cycle 20 mins",
-  "Stretch or Yoga",
-  "Foam Roll",
-];
-
-const fridayRoutine = [
-  "Warm-up: Arm Circles",
-  "Overhead Press – 4x8",
-  "Lateral Raises – 3x12",
-  "Front Raises – 3x12",
-  "Shrugs – 3x15",
-  "Russian Twists – 3x20",
-  "Hanging Leg Raises – 3x10",
-];
-
-const saturdayRoutine = [
-  "Warm-up: Jump Rope",
-  "Deadlifts – 4x6",
-  "Pull-ups – 3xMax",
-  "Dumbbell Thrusters – 3x12",
-  "Pushups – 3xFailure",
-  "Mountain Climbers – 3x30 sec",
-];
-
-const sundayRoutine = [
-  "Rest Day / Light Recovery",
-];
