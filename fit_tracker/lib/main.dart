@@ -3,6 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/services.dart';
 
+// Import separated components
+import 'widgets/routine_tile.dart';
+import 'widgets/fitness_stat_card.dart';
+import 'widgets/timer_dialog.dart';
+import 'data/workout_data.dart';
+import 'utils/theme_colors.dart';
+
 void main() {
   runApp(GymDashboardApp());
 }
@@ -74,217 +81,75 @@ class GymDashboard extends StatefulWidget {
 
 class _GymDashboardState extends State<GymDashboard> {
   bool started = false;
-  String selectedDay = _getTodayName();
+  String selectedDay = WorkoutData.getTodayName();
 
-  static String _getTodayName() {
-    final now = DateTime.now().weekday;
-    // In Dart, weekday: 1=Monday, ..., 7=Sunday
-    return [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ][now % 7];
-  }
+  // Weekly tracking data
+  Map<String, Set<String>> weeklyCompletedExercises = {};
+  Map<String, int> weeklySteps = {};
+  Map<String, int> weeklyCalories = {};
+  Map<String, int> weeklyWorkoutMinutes = {};
 
-  final Map<String, List<Map<String, dynamic>>> weeklyRoutine = const {
-    'Monday': [
-      {
-        'label': "Warm-up: 10 min treadmill",
-        'icon': Icons.directions_run,
-        'duration': 10,
-        'steps': 1200,
-        'calories': 80,
-        'workout': 10,
-      },
-      {
-        'label': "Bench Press - 4 Sets",
-        'icon': Icons.fitness_center,
-        'duration': 10,
-        'steps': 100,
-        'calories': 50,
-        'workout': 3,
-      },
-      {
-        'label': "Tricep Pushdowns - 3 Sets",
-        'icon': Icons.cable,
-        'duration': 10,
-        'steps': 80,
-        'calories': 30,
-        'workout': 2,
-      },
-    ],
-    'Tuesday': [
-      {
-        'label': "Pull-ups - 3 Sets",
-        'icon': Icons.fitness_center,
-        'duration': 10,
-        'steps': 60,
-        'calories': 25,
-        'workout': 2,
-      },
-      {
-        'label': "Deadlifts - 4 Sets",
-        'icon': Icons.sports_kabaddi,
-        'duration': 10,
-        'steps': 90,
-        'calories': 60,
-        'workout': 3,
-      },
-      {
-        'label': "Barbell Rows - 3 Sets",
-        'icon': Icons.cable,
-        'duration': 10,
-        'steps': 70,
-        'calories': 35,
-        'workout': 2,
-      },
-    ],
-    'Wednesday': [
-      {
-        'label': "Squats - 4 Sets",
-        'icon': Icons.directions_run,
-        'duration': 10,
-        'steps': 110,
-        'calories': 55,
-        'workout': 3,
-      },
-      {
-        'label': "Lunges - 3 Sets",
-        'icon': Icons.directions_walk,
-        'duration': 10,
-        'steps': 90,
-        'calories': 30,
-        'workout': 2,
-      },
-      {
-        'label': "Leg Curls - 3 Sets",
-        'icon': Icons.fitness_center,
-        'duration': 10,
-        'steps': 60,
-        'calories': 25,
-        'workout': 2,
-      },
-    ],
-    'Thursday': [
-      {
-        'label': "Shoulder Press - 4 Sets",
-        'icon': Icons.fitness_center,
-        'duration': 10,
-        'steps': 60,
-        'calories': 40,
-        'workout': 3,
-      },
-      {
-        'label': "Lateral Raises - 3 Sets",
-        'icon': Icons.trending_up,
-        'duration': 10,
-        'steps': 40,
-        'calories': 20,
-        'workout': 2,
-      },
-      {
-        'label': "Front Raises - 3 Sets",
-        'icon': Icons.trending_up,
-        'duration': 10,
-        'steps': 40,
-        'calories': 20,
-        'workout': 2,
-      },
-    ],
-    'Friday': [
-      {
-        'label': "Chest Fly - 4 Sets",
-        'icon': Icons.sports_mma,
-        'duration': 10,
-        'steps': 60,
-        'calories': 45,
-        'workout': 3,
-      },
-      {
-        'label': "Pushups - 3 Sets",
-        'icon': Icons.accessibility,
-        'duration': 10,
-        'steps': 50,
-        'calories': 20,
-        'workout': 2,
-      },
-      {
-        'label': "Tricep Dips - 3 Sets",
-        'icon': Icons.accessibility,
-        'duration': 10,
-        'steps': 50,
-        'calories': 20,
-        'workout': 2,
-      },
-    ],
-    'Saturday': [
-      {
-        'label': "Rest & Recovery",
-        'icon': Icons.spa,
-        'duration': 0,
-        'steps': 0,
-        'calories': 0,
-        'workout': 0,
-      },
-    ],
-    'Sunday': [
-      {
-        'label': "Cardio: 20 min",
-        'icon': Icons.directions_run,
-        'duration': 10,
-        'steps': 2500,
-        'calories': 180,
-        'workout': 20,
-      },
-      {
-        'label': "Abs Workout - 3 Sets",
-        'icon': Icons.fitness_center,
-        'duration': 10,
-        'steps': 40,
-        'calories': 25,
-        'workout': 2,
-      },
-      {
-        'label': "Planks - 3 Sets",
-        'icon': Icons.accessibility,
-        'duration': 10,
-        'steps': 20,
-        'calories': 15,
-        'workout': 3,
-      },
-    ],
-  };
-
+  // Current day tracking
   Set<String> completedExercises = {};
   int steps = 0;
   int calories = 0;
   int workoutMinutes = 0;
-
-  // Update the rest day logic and quotes to use Saturday instead of Sunday
-  final List<String> restDayQuotes = [
-    "Resting so hard, I might pull a muscle!",
-    "My favorite exercise on rest day: diddly squats.",
-    "Abs are made in the kitchen... and on the couch!",
-    "Today's workout: 100 reps of relaxation.",
-    "If you need me, I'll be busy not moving.",
-    "Rest day: Because even superheroes need a day off!",
-    "Rest day: the only day my gym clothes are safe from sweat.",
-    "I'm not lazy, I'm on energy-saving mode!",
-    "Couch marathon: Level Expert.",
-    "Resting is a workout too, right?",
-  ];
 
   final ConfettiController _confettiController = ConfettiController(
     duration: const Duration(seconds: 3),
   );
   bool showCongrats = false;
 
+  int _currentIndex = 0;
+
+  // Initialize weekly data for the selected day
+  void _initializeDayData(String day) {
+    weeklyCompletedExercises[day] ??= {};
+    weeklySteps[day] ??= 0;
+    weeklyCalories[day] ??= 0;
+    weeklyWorkoutMinutes[day] ??= 0;
+
+    // Load current day's data
+    completedExercises = Set.from(weeklyCompletedExercises[day] ?? {});
+    steps = weeklySteps[day] ?? 0;
+    calories = weeklyCalories[day] ?? 0;
+    workoutMinutes = weeklyWorkoutMinutes[day] ?? 0;
+  }
+
+  // Save current day's data
+  void _saveDayData() {
+    weeklyCompletedExercises[selectedDay] = Set.from(completedExercises);
+    weeklySteps[selectedDay] = steps;
+    weeklyCalories[selectedDay] = calories;
+    weeklyWorkoutMinutes[selectedDay] = workoutMinutes;
+  }
+
+  // Get weekly totals
+  Map<String, int> get _weeklyTotals {
+    int totalSteps = 0;
+    int totalCalories = 0;
+    int totalWorkoutMinutes = 0;
+    int totalCompletedExercises = 0;
+
+    for (String day in weeklyCompletedExercises.keys) {
+      totalSteps += weeklySteps[day] ?? 0;
+      totalCalories += weeklyCalories[day] ?? 0;
+      totalWorkoutMinutes += weeklyWorkoutMinutes[day] ?? 0;
+      totalCompletedExercises += weeklyCompletedExercises[day]?.length ?? 0;
+    }
+
+    return {
+      'steps': totalSteps,
+      'calories': totalCalories,
+      'workoutMinutes': totalWorkoutMinutes,
+      'completedExercises': totalCompletedExercises,
+    };
+  }
+
   void _showTimerDialog(String label, int duration) async {
-    final routine = weeklyRoutine[selectedDay] ?? [];
+    final routine = List<Map<String, dynamic>>.from(
+      WorkoutData.weeklyRoutine[selectedDay] ?? [],
+    );
     final exercise = routine.firstWhere(
       (e) => e['label'] == label,
       orElse: () => {},
@@ -295,21 +160,22 @@ class _GymDashboardState extends State<GymDashboard> {
         completedExercises.add(label);
         steps += (exercise['steps'] ?? 0) as int;
         calories += (exercise['calories'] ?? 0) as int;
-        workoutMinutes += (exercise['workout'] ?? 0) as int;
+        // For rest day, no workout time is added
       });
+      _saveDayData();
       return;
     }
-    final done = await showDialog<bool>(
+    final secondsSpent = await showDialog<int>(
       context: context,
       builder: (context) =>
           TimerDialog(exerciseLabel: label, duration: duration),
     );
-    if (done == true) {
+    if (secondsSpent != null && secondsSpent > 0) {
       setState(() {
         completedExercises.add(label);
         steps += (exercise['steps'] ?? 0) as int;
         calories += (exercise['calories'] ?? 0) as int;
-        workoutMinutes += (exercise['workout'] ?? 0) as int;
+        workoutMinutes += (secondsSpent / 60).ceil();
         // Check if all exercises are done (not rest day)
         if (selectedDay != 'Saturday' &&
             completedExercises.length == routine.length) {
@@ -317,7 +183,14 @@ class _GymDashboardState extends State<GymDashboard> {
           _confettiController.play();
         }
       });
+      _saveDayData();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeDayData(selectedDay);
   }
 
   @override
@@ -328,19 +201,20 @@ class _GymDashboardState extends State<GymDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final routine = weeklyRoutine[selectedDay] ?? [];
+    final routine = List<Map<String, dynamic>>.from(
+      WorkoutData.weeklyRoutine[selectedDay] ?? [],
+    );
     final isRestDay = selectedDay == 'Saturday';
-    final randomQuote = (restDayQuotes..shuffle()).first;
+    final randomQuote = (List<String>.from(
+      WorkoutData.restDayQuotes,
+    )..shuffle()).first;
     final isDark = widget.themeMode == ThemeMode.dark;
-    // Electric Blue & Black palette
-    final primaryColor = const Color(0xFF2979FF); // Electric Blue
-    final accentColor = isDark
-        ? const Color(0xFF23272A)
-        : const Color(0xFFE3F2FD); // Charcoal or light blue
-    final cardColor = isDark
-        ? const Color(0xFF2C2F33)
-        : const Color(0xFFF5F7FA); // Slightly lighter for cards
-    final textColor = isDark ? Colors.white : Colors.black;
+
+    // Get theme colors
+    final primaryColor = ThemeColors.primaryColor;
+    final accentColor = ThemeColors.getAccentColor(isDark);
+    final cardColor = ThemeColors.getCardColor(isDark);
+    final textColor = ThemeColors.getTextColor(isDark);
 
     return Scaffold(
       appBar: started
@@ -396,213 +270,11 @@ class _GymDashboardState extends State<GymDashboard> {
             height: double.infinity,
             color: accentColor,
             child: started
-                ? ListView(
-                    padding: const EdgeInsets.all(20),
+                ? IndexedStack(
+                    index: _currentIndex,
                     children: [
-                      // Select Day row
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Select Day: ",
-                              style: GoogleFonts.robotoCondensed(
-                                fontSize: 16,
-                                color: textColor,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Theme(
-                              data: Theme.of(context).copyWith(
-                                splashColor: Colors.transparent,
-                                highlightColor: Colors.transparent,
-                              ),
-                              child: DropdownButton<String>(
-                                dropdownColor: cardColor,
-                                value: selectedDay,
-                                iconEnabledColor: primaryColor,
-                                style: TextStyle(color: textColor),
-                                underline: Container(
-                                  height: 2,
-                                  color: primaryColor,
-                                ),
-                                isDense: true,
-                                items:
-                                    [
-                                      'Sunday',
-                                      'Monday',
-                                      'Tuesday',
-                                      'Wednesday',
-                                      'Thursday',
-                                      'Friday',
-                                      'Saturday',
-                                    ].map((day) {
-                                      return DropdownMenuItem<String>(
-                                        value: day,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 2.0,
-                                          ),
-                                          child: Text(
-                                            day,
-                                            style: TextStyle(color: textColor),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                onChanged: (String? newDay) {
-                                  setState(() {
-                                    selectedDay = newDay!;
-                                    completedExercises.clear();
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        isRestDay ? "REST & RECOVERY" : "$selectedDay Routine",
-                        style: GoogleFonts.robotoCondensed(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      if (isRestDay) ...[
-                        Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.spa,
-                                color: Colors.greenAccent,
-                                size: 80,
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                randomQuote,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.robotoCondensed(
-                                  color: textColor,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                            ],
-                          ),
-                        ),
-                      ] else ...[
-                        // Progress bar for daily completion (except rest day)
-                        if (routine.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                LinearProgressIndicator(
-                                  value: routine.isEmpty
-                                      ? 0
-                                      : completedExercises.length /
-                                            routine.length,
-                                  minHeight: 10,
-                                  backgroundColor: cardColor,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    primaryColor,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${completedExercises.length}/${routine.length} completed',
-                                  style: GoogleFonts.robotoCondensed(
-                                    color: textColor,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        ...routine.map((exercise) {
-                          final isDone = completedExercises.contains(
-                            exercise['label'],
-                          );
-                          final duration = exercise['duration'] ?? 60;
-                          return RoutineTile(
-                            label: exercise['label'],
-                            icon: exercise['icon'],
-                            duration: duration,
-                            isDone: isDone,
-                            onTap: isDone
-                                ? null
-                                : () => _showTimerDialog(
-                                    exercise['label'],
-                                    duration,
-                                  ),
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            primaryColor: primaryColor,
-                          );
-                        }),
-                      ],
-                      const SizedBox(height: 30),
-                      Text(
-                        "Fitness Tracker",
-                        style: GoogleFonts.robotoCondensed(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          FitnessStatCard(
-                            label: "Steps",
-                            value: steps.toString(),
-                            icon: Icons.directions_walk,
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            primaryColor: primaryColor,
-                          ),
-                          FitnessStatCard(
-                            label: "Calories",
-                            value: "$calories kcal",
-                            icon: Icons.local_fire_department,
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            primaryColor: primaryColor,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          FitnessStatCard(
-                            label: "Water",
-                            value: "2.0 L",
-                            icon: Icons.water_drop,
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            primaryColor: primaryColor,
-                          ),
-                          FitnessStatCard(
-                            label: "Workout",
-                            value: "${workoutMinutes}m",
-                            icon: Icons.timer,
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            primaryColor: primaryColor,
-                          ),
-                        ],
-                      ),
+                      _buildTodayScreen(context),
+                      _buildWeeklyScreen(context),
                     ],
                   )
                 : Center(
@@ -611,7 +283,7 @@ class _GymDashboardState extends State<GymDashboard> {
                       children: [
                         Icon(
                           Icons.fitness_center,
-                          color: Colors.redAccent,
+                          color: primaryColor,
                           size: 100,
                         ),
                         const SizedBox(height: 20),
@@ -619,7 +291,7 @@ class _GymDashboardState extends State<GymDashboard> {
                           "Ready to Crush It?",
                           style: GoogleFonts.bebasNeue(
                             fontSize: 36,
-                            color: Colors.black,
+                            color: textColor,
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -628,7 +300,7 @@ class _GymDashboardState extends State<GymDashboard> {
                           "Your daily gym plan awaits.",
                           style: GoogleFonts.robotoCondensed(
                             fontSize: 16,
-                            color: Colors.grey[400],
+                            color: textColor.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -639,7 +311,7 @@ class _GymDashboardState extends State<GymDashboard> {
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: primaryColor,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 40,
                               vertical: 18,
@@ -648,7 +320,7 @@ class _GymDashboardState extends State<GymDashboard> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             elevation: 10,
-                            shadowColor: Colors.redAccent.withOpacity(0.5),
+                            shadowColor: primaryColor.withOpacity(0.5),
                           ),
                           child: const Text(
                             "START",
@@ -762,139 +434,383 @@ class _GymDashboardState extends State<GymDashboard> {
             ),
         ],
       ),
+      bottomNavigationBar: started
+          ? BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              selectedItemColor: ThemeColors.primaryColor,
+              unselectedItemColor:
+                  Theme.of(context).brightness == Brightness.light
+                  ? ThemeColors.primaryColor.withOpacity(0.5)
+                  : Colors.white70,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.today),
+                  label: 'Today',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_today),
+                  label: 'Weekly',
+                ),
+              ],
+            )
+          : null,
     );
   }
-}
 
-class RoutineTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final int duration;
-  final bool isDone;
-  final VoidCallback? onTap;
-  final Color textColor;
-  final Color? cardColor;
-  final Color primaryColor;
+  Widget _buildTodayScreen(BuildContext context) {
+    final routine = List<Map<String, dynamic>>.from(
+      WorkoutData.weeklyRoutine[selectedDay] ?? [],
+    );
+    final isRestDay = selectedDay == 'Saturday';
+    final randomQuote = (List<String>.from(
+      WorkoutData.restDayQuotes,
+    )..shuffle()).first;
+    final isDark = widget.themeMode == ThemeMode.dark;
 
-  const RoutineTile({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.duration,
-    required this.isDone,
-    this.onTap,
-    required this.textColor,
-    required this.cardColor,
-    required this.primaryColor,
-  });
+    // Get theme colors
+    final primaryColor = ThemeColors.primaryColor;
+    final accentColor = ThemeColors.getAccentColor(isDark);
+    final cardColor = ThemeColors.getCardColor(isDark);
+    final textColor = ThemeColors.getTextColor(isDark);
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Opacity(
-        opacity: isDone ? 0.5 : 1.0,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDone ? Colors.green : primaryColor,
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(2, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: accentColor,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
             children: [
-              // Accent bar
-              Container(
-                width: 6,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: isDone ? Colors.green : primaryColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    bottomLeft: Radius.circular(12),
-                  ),
+              // Move Select Day row here
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Select Day: ",
+                      style: GoogleFonts.robotoCondensed(
+                        fontSize: 16,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                      ),
+                      child: DropdownButton<String>(
+                        dropdownColor: cardColor,
+                        value: selectedDay,
+                        iconEnabledColor: primaryColor,
+                        style: TextStyle(color: textColor),
+                        underline: Container(height: 2, color: primaryColor),
+                        isDense: true,
+                        items: WorkoutData.weekDays.map((day) {
+                          return DropdownMenuItem<String>(
+                            value: day,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2.0,
+                              ),
+                              child: Text(
+                                day,
+                                style: TextStyle(color: textColor),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newDay) {
+                          setState(() {
+                            _saveDayData(); // Save current day data
+                            selectedDay = newDay!;
+                            _initializeDayData(
+                              selectedDay,
+                            ); // Load new day data
+                          });
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Icon(icon, color: textColor, size: 26),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.robotoCondensed(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+              const SizedBox(height: 20),
+              Text(
+                isRestDay ? "REST & RECOVERY" : "$selectedDay Routine",
+                style: GoogleFonts.robotoCondensed(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                  letterSpacing: 1.5,
                 ),
               ),
-              if (isDone)
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
+              const SizedBox(height: 10),
+              if (isRestDay) ...[
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.spa, color: Colors.greenAccent, size: 80),
+                      const SizedBox(height: 20),
+                      Text(
+                        randomQuote,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.robotoCondensed(
+                          color: textColor,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
+              ] else ...[
+                // Progress bar for daily completion (except rest day)
+                if (routine.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LinearProgressIndicator(
+                          value: routine.isEmpty
+                              ? 0
+                              : completedExercises.length / routine.length,
+                          minHeight: 10,
+                          backgroundColor: cardColor,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            primaryColor,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${completedExercises.length}/${routine.length} completed',
+                          style: GoogleFonts.robotoCondensed(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                ...routine.map((exercise) {
+                  final isDone = completedExercises.contains(exercise['label']);
+                  final duration = exercise['duration'] ?? 60;
+                  return RoutineTile(
+                    label: exercise['label'],
+                    icon: exercise['icon'],
+                    duration: duration,
+                    isDone: isDone,
+                    onTap: isDone
+                        ? null
+                        : () => _showTimerDialog(exercise['label'], duration),
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  );
+                }),
+              ],
+              const SizedBox(height: 30),
+              Text(
+                "Today's Fitness Tracker",
+                style: GoogleFonts.robotoCondensed(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  FitnessStatCard(
+                    label: "Steps",
+                    value: steps.toString(),
+                    icon: Icons.directions_walk,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                  FitnessStatCard(
+                    label: "Calories",
+                    value: "$calories kcal",
+                    icon: Icons.local_fire_department,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  FitnessStatCard(
+                    label: "Water",
+                    value: "2.0 L",
+                    icon: Icons.water_drop,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                  FitnessStatCard(
+                    label: "Workout",
+                    value: "${workoutMinutes}m",
+                    icon: Icons.timer,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                ],
+              ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
-}
 
-class FitnessStatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color textColor;
-  final Color? cardColor;
-  final Color primaryColor;
+  Widget _buildWeeklyScreen(BuildContext context) {
+    final isDark = widget.themeMode == ThemeMode.dark;
+    final primaryColor = ThemeColors.primaryColor;
+    final accentColor = ThemeColors.getAccentColor(isDark);
+    final cardColor = ThemeColors.getCardColor(isDark);
+    final textColor = ThemeColors.getTextColor(isDark);
 
-  const FitnessStatCard({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.textColor,
-    required this.cardColor,
-    required this.primaryColor,
-  });
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: accentColor,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              // Redesigned Weekly Progress Section
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 28,
+                ),
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: primaryColor.withOpacity(0.15),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: primaryColor,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Weekly Progress",
+                          style: GoogleFonts.robotoCondensed(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildWeeklyStatCard(
+                          "Steps",
+                          "${_weeklyTotals['steps']}",
+                          Icons.directions_walk,
+                          textColor,
+                          primaryColor,
+                        ),
+                        _buildWeeklyStatCard(
+                          "Calories",
+                          "${_weeklyTotals['calories']} kcal",
+                          Icons.local_fire_department,
+                          textColor,
+                          primaryColor,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildWeeklyStatCard(
+                          "Workout",
+                          "${_weeklyTotals['workoutMinutes']}m",
+                          Icons.timer,
+                          textColor,
+                          primaryColor,
+                        ),
+                        _buildWeeklyStatCard(
+                          "Done",
+                          "${_weeklyTotals['completedExercises']}",
+                          Icons.check_circle,
+                          textColor,
+                          primaryColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Remove extra vertical space here
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildWeeklyStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color textColor,
+    Color primaryColor,
+  ) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.all(6),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: primaryColor, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(2, 4),
-            ),
-          ],
+          color: primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: primaryColor.withOpacity(0.13)),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: textColor, size: 28),
+            Icon(icon, color: primaryColor, size: 28),
             const SizedBox(height: 8),
             Text(
               value,
@@ -904,180 +820,19 @@ class FitnessStatCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 2),
             Text(
-              label.toUpperCase(),
+              label,
               style: GoogleFonts.robotoCondensed(
                 color: primaryColor,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 1,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TimerDialog extends StatefulWidget {
-  final String exerciseLabel;
-  final int duration;
-  const TimerDialog({
-    super.key,
-    required this.exerciseLabel,
-    required this.duration,
-  });
-
-  @override
-  State<TimerDialog> createState() => _TimerDialogState();
-}
-
-class _TimerDialogState extends State<TimerDialog>
-    with SingleTickerProviderStateMixin {
-  late int remaining;
-  late bool running;
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    remaining = widget.duration;
-    running = true;
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: widget.duration),
-    )..forward();
-    _startTimer();
-  }
-
-  void _startTimer() async {
-    while (running && remaining > 0) {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return;
-      setState(() {
-        remaining--;
-      });
-    }
-    if (mounted && remaining == 0) {
-      running = false;
-      // Optionally, play a sound or vibrate here
-    }
-  }
-
-  @override
-  void dispose() {
-    running = false;
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final percent = 1 - (remaining / widget.duration);
-    final primaryColor = const Color(0xFF2979FF);
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: Column(
-        children: [
-          Text(
-            widget.exerciseLabel,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.robotoCondensed(
-              color: primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            remaining > 0 ? "Keep Going!" : "Great Job!",
-            style: GoogleFonts.robotoCondensed(
-              color: Colors.white70,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 160,
-            height: 160,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return CircularProgressIndicator(
-                      value: percent,
-                      strokeWidth: 10,
-                      backgroundColor: Colors.grey[800],
-                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                    );
-                  },
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.4),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    '${remaining ~/ 60}:${(remaining % 60).toString().padLeft(2, '0')}',
-                    style: GoogleFonts.bebasNeue(
-                      color: Colors.white,
-                      fontSize: 54,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(
-                          color: primaryColor.withOpacity(0.7),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: remaining == 0
-                ? () {
-                    running = false;
-                    Navigator.of(context).pop(true);
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              elevation: 8,
-              shadowColor: primaryColor.withOpacity(0.4),
-            ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
