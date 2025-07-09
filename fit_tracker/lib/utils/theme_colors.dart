@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
 
 class ThemeColors {
-  static const Color primaryColor = Color(0xFF2979FF); // Electric Blue
-  static const Color accentColorDark = Color(0xFF23272A); // Charcoal
-  static const Color accentColorLight = Color(0xFFE3F2FD); // Light blue
-  static const Color cardColorDark = Color(
-    0xFF2C2F33,
-  ); // Slightly lighter for cards
-  static const Color cardColorLight = Color(
-    0xFFF5F7FA,
-  ); // Slightly lighter for cards
+  // Primary and accent colors
+  static const Color primaryColor = Color(0xFF1976D2); // Vibrant Blue
+  static const Color successColor = Color(0xFF43D676); // Green for progress
+  static const Color highlightColor = Color(
+    0xFFFF9100,
+  ); // Orange for highlights
 
-  static Color getAccentColor(bool isDark) {
-    return isDark ? accentColorDark : accentColorLight;
-  }
+  // Card backgrounds
+  static Color getCardColor(bool isDark) =>
+      isDark ? const Color(0xFF23272F) : const Color(0xFFFFFFFF);
 
-  static Color getCardColor(bool isDark) {
-    return isDark ? cardColorDark : cardColorLight;
-  }
+  // Accent backgrounds
+  static Color getAccentColor(bool isDark) =>
+      isDark ? const Color(0xFF181A20) : const Color(0xFFF7F7F7);
 
-  static Color getTextColor(bool isDark) {
-    return isDark ? Colors.white : Colors.black;
-  }
+  // Text colors
+  static Color getTextColor(bool isDark) =>
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF23272F);
+  static Color getMutedTextColor(bool isDark) =>
+      isDark ? const Color(0xFFB0B0B0) : const Color(0xFF757575);
+
+  // Progress bar color
+  static Color getProgressColor(bool isDark) =>
+      isDark ? successColor : successColor;
+
+  // Highlight color for buttons or actions
+  static Color getHighlightColor(bool isDark) => highlightColor;
+
+  // Error/alert color
+  static const Color errorColor = Color(0xFFFF5252);
 }

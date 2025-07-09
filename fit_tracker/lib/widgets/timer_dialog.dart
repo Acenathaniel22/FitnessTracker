@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../utils/theme_colors.dart';
 
 class TimerDialog extends StatefulWidget {
   final String exerciseLabel;
@@ -61,7 +62,7 @@ class _TimerDialogState extends State<TimerDialog>
     final percent = 1 - (remaining / widget.duration);
     final primaryColor = const Color(0xFF2979FF);
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: ThemeColors.getCardColor(true),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Column(
         children: [
@@ -79,7 +80,7 @@ class _TimerDialogState extends State<TimerDialog>
           Text(
             remaining > 0 ? "Keep Going!" : "Great Job!",
             style: GoogleFonts.robotoCondensed(
-              color: Colors.white70,
+              color: ThemeColors.getMutedTextColor(true),
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -101,7 +102,7 @@ class _TimerDialogState extends State<TimerDialog>
                     return CircularProgressIndicator(
                       value: percent,
                       strokeWidth: 10,
-                      backgroundColor: Colors.grey[800],
+                      backgroundColor: ThemeColors.getCardColor(true),
                       valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     );
                   },
@@ -119,7 +120,7 @@ class _TimerDialogState extends State<TimerDialog>
                   child: Text(
                     '${remaining ~/ 60}:${(remaining % 60).toString().padLeft(2, '0')}',
                     style: GoogleFonts.bebasNeue(
-                      color: Colors.white,
+                      color: ThemeColors.getTextColor(true),
                       fontSize: 54,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
@@ -136,30 +137,95 @@ class _TimerDialogState extends State<TimerDialog>
             ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: remaining == 0
-                ? () {
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: ThemeColors.getCardColor(true),
+                      title: Text(
+                        'Quit Exercise?',
+                        style: TextStyle(color: ThemeColors.getTextColor(true)),
+                      ),
+                      content: Text(
+                        'Are you sure you want to quit?',
+                        style: TextStyle(
+                          color: ThemeColors.getMutedTextColor(true),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text(
+                            'Quit',
+                            style: TextStyle(color: ThemeColors.errorColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
                     running = false;
-                    Navigator.of(context).pop(secondsSpent);
+                    Navigator.of(context).pop(-1); // Special value for quit
                   }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ThemeColors.getCardColor(true),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
+                  elevation: 4,
+                  shadowColor: primaryColor.withOpacity(0.2),
+                ),
+                child: Text(
+                  'Quit',
+                  style: TextStyle(
+                    color: ThemeColors.getTextColor(true),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              elevation: 8,
-              shadowColor: primaryColor.withOpacity(0.4),
-            ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+              ElevatedButton(
+                onPressed: remaining == 0
+                    ? () {
+                        running = false;
+                        Navigator.of(context).pop(secondsSpent);
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
+                  elevation: 8,
+                  shadowColor: primaryColor.withOpacity(0.4),
+                ),
+                child: Text(
+                  'Done',
+                  style: TextStyle(
+                    color: ThemeColors.getTextColor(true),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

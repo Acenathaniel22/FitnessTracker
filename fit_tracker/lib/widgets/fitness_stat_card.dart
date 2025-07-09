@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../utils/theme_colors.dart';
 
 class FitnessStatCard extends StatelessWidget {
   final String label;
@@ -31,7 +32,7 @@ class FitnessStatCard extends StatelessWidget {
           border: Border.all(color: primaryColor, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: ThemeColors.getMutedTextColor(true).withOpacity(0.1),
               blurRadius: 6,
               offset: const Offset(2, 4),
             ),

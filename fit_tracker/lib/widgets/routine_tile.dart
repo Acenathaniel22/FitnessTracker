@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../utils/theme_colors.dart';
 
 class RoutineTile extends StatelessWidget {
   final String label;
@@ -35,12 +36,12 @@ class RoutineTile extends StatelessWidget {
             color: cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDone ? Colors.green : primaryColor,
+              color: isDone ? ThemeColors.successColor : primaryColor,
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: ThemeColors.getMutedTextColor(true).withOpacity(0.08),
                 blurRadius: 8,
                 offset: const Offset(2, 4),
               ),
@@ -54,7 +55,7 @@ class RoutineTile extends StatelessWidget {
                 width: 6,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isDone ? Colors.green : primaryColor,
+                  color: isDone ? ThemeColors.successColor : primaryColor,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     bottomLeft: Radius.circular(12),
@@ -79,7 +80,7 @@ class RoutineTile extends StatelessWidget {
                   padding: EdgeInsets.only(right: 8.0),
                   child: Icon(
                     Icons.check_circle,
-                    color: Colors.green,
+                    color: ThemeColors.successColor,
                     size: 24,
                   ),
                 ),

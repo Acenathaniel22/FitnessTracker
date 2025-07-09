@@ -9,18 +9,24 @@ import 'widgets/fitness_stat_card.dart';
 import 'widgets/timer_dialog.dart';
 import 'data/workout_data.dart';
 import 'utils/theme_colors.dart';
+import 'settings_screen.dart'; // <-- Add this import
+import 'login_screen.dart';
 
 void main() {
   runApp(GymDashboardApp());
 }
 
 class GymDashboardApp extends StatefulWidget {
+  const GymDashboardApp({Key? key}) : super(key: key);
+
   @override
   State<GymDashboardApp> createState() => _GymDashboardAppState();
 }
 
 class _GymDashboardAppState extends State<GymDashboardApp> {
   ThemeMode _themeMode = ThemeMode.dark;
+  bool _useMetric = true;
+  bool _loggedIn = false;
 
   void _toggleTheme() {
     setState(() {
@@ -28,6 +34,26 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
           ? ThemeMode.light
           : ThemeMode.dark;
     });
+  }
+
+  void _setUnits(bool useMetric) {
+    setState(() {
+      _useMetric = useMetric;
+    });
+  }
+
+  void _login() {
+    setState(() {
+      _loggedIn = true;
+    });
+  }
+
+  // Add reset progress callback
+  final GlobalKey<_GymDashboardState> _dashboardKey =
+      GlobalKey<_GymDashboardState>();
+
+  void _resetProgress() {
+    _dashboardKey.currentState?.resetProgress();
   }
 
   @override
@@ -39,29 +65,79 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
         textTheme: GoogleFonts.robotoCondensedTextTheme(
           ThemeData.light().textTheme,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: ThemeColors.primaryColor,
           elevation: 0,
-          iconTheme: IconThemeData(color: Colors.black),
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: GoogleFonts.bebasNeue(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+          ),
         ),
-        colorScheme: const ColorScheme.light().copyWith(
-          primary: Color(0xFFFF2D2D),
+        colorScheme: ColorScheme.light().copyWith(
+          primary: ThemeColors.primaryColor,
+          secondary: ThemeColors.successColor,
+          background: ThemeColors.getAccentColor(false),
+        ),
+        scaffoldBackgroundColor: ThemeColors.getAccentColor(false),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ThemeColors.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 10,
+            shadowColor: ThemeColors.primaryColor.withOpacity(0.5),
+          ),
         ),
       ),
       darkTheme: ThemeData.dark().copyWith(
         textTheme: GoogleFonts.robotoCondensedTextTheme(
           ThemeData.dark().textTheme,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
+        appBarTheme: AppBarTheme(
+          backgroundColor: ThemeColors.primaryColor,
           elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: GoogleFonts.bebasNeue(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+          ),
         ),
-        colorScheme: const ColorScheme.dark().copyWith(
-          primary: Color(0xFFFF2D2D),
+        colorScheme: ColorScheme.dark().copyWith(
+          primary: ThemeColors.primaryColor,
+          secondary: ThemeColors.successColor,
+          background: ThemeColors.getAccentColor(true),
+        ),
+        scaffoldBackgroundColor: ThemeColors.getAccentColor(true),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ThemeColors.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 10,
+            shadowColor: ThemeColors.primaryColor.withOpacity(0.5),
+          ),
         ),
       ),
       themeMode: _themeMode,
-      home: GymDashboard(onToggleTheme: _toggleTheme, themeMode: _themeMode),
+      home: _loggedIn
+          ? GymDashboard(
+              key: _dashboardKey,
+              onToggleTheme: _toggleTheme,
+              themeMode: _themeMode,
+              onResetProgress: _resetProgress,
+              useMetric: _useMetric,
+              onSetUnits: _setUnits,
+            )
+          : LoginScreen(onLogin: _login),
     );
   }
 }
@@ -69,11 +145,17 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
 class GymDashboard extends StatefulWidget {
   final VoidCallback onToggleTheme;
   final ThemeMode themeMode;
+  final VoidCallback onResetProgress;
+  final bool useMetric;
+  final ValueChanged<bool> onSetUnits;
   const GymDashboard({
-    super.key,
+    Key? key,
     required this.onToggleTheme,
     required this.themeMode,
-  });
+    required this.onResetProgress,
+    required this.useMetric,
+    required this.onSetUnits,
+  }) : super(key: key);
 
   @override
   State<GymDashboard> createState() => _GymDashboardState();
@@ -170,7 +252,8 @@ class _GymDashboardState extends State<GymDashboard> {
       builder: (context) =>
           TimerDialog(exerciseLabel: label, duration: duration),
     );
-    if (secondsSpent != null && secondsSpent > 0) {
+    // Only mark as done if timer completed (secondsSpent >= duration)
+    if (secondsSpent != null && secondsSpent >= duration) {
       setState(() {
         completedExercises.add(label);
         steps += (exercise['steps'] ?? 0) as int;
@@ -184,6 +267,24 @@ class _GymDashboardState extends State<GymDashboard> {
         }
       });
       _saveDayData();
+    } else if (secondsSpent == -1 ||
+        (secondsSpent != null && secondsSpent < duration)) {
+      // Show motivational dialog if user quits early
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Don't quit!"),
+          content: const Text(
+            "You can do it! Try to finish the full time for best results.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -243,14 +344,21 @@ class _GymDashboardState extends State<GymDashboard> {
               elevation: 0,
               actions: [
                 IconButton(
-                  icon: Icon(
-                    isDark ? Icons.light_mode : Icons.dark_mode,
-                    color: Colors.white,
-                  ),
-                  tooltip: isDark
-                      ? 'Switch to Light Mode'
-                      : 'Switch to Dark Mode',
-                  onPressed: widget.onToggleTheme,
+                  icon: const Icon(Icons.settings, color: Colors.white),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SettingsScreen(
+                          themeMode: widget.themeMode,
+                          onToggleTheme: widget.onToggleTheme,
+                          onResetProgress: widget.onResetProgress,
+                          useMetric: widget.useMetric,
+                          onSetUnits: widget.onSetUnits,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
               systemOverlayStyle:
@@ -446,7 +554,7 @@ class _GymDashboardState extends State<GymDashboard> {
               unselectedItemColor:
                   Theme.of(context).brightness == Brightness.light
                   ? ThemeColors.primaryColor.withOpacity(0.5)
-                  : Colors.white70,
+                  : ThemeColors.getMutedTextColor(isDark),
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.today),
@@ -556,7 +664,11 @@ class _GymDashboardState extends State<GymDashboard> {
                 Center(
                   child: Column(
                     children: [
-                      Icon(Icons.spa, color: Colors.greenAccent, size: 80),
+                      Icon(
+                        Icons.spa,
+                        color: ThemeColors.successColor,
+                        size: 80,
+                      ),
                       const SizedBox(height: 20),
                       Text(
                         randomQuote,
@@ -656,7 +768,7 @@ class _GymDashboardState extends State<GymDashboard> {
                 children: [
                   FitnessStatCard(
                     label: "Water",
-                    value: "2.0 L",
+                    value: getWaterValue(),
                     icon: Icons.water_drop,
                     textColor: textColor,
                     cardColor: cardColor,
@@ -685,6 +797,27 @@ class _GymDashboardState extends State<GymDashboard> {
     final accentColor = ThemeColors.getAccentColor(isDark);
     final cardColor = ThemeColors.getCardColor(isDark);
     final textColor = ThemeColors.getTextColor(isDark);
+
+    // Prepare weekly steps data for the chart
+    final weekDays = WorkoutData.weekDays;
+    // final stepsData = weekDays.map((d) => weeklySteps[d] ?? 0).toList();
+    // Prepare body part distribution for the week
+    final Map<String, int> bodyPartCounts = {};
+    for (final day in weekDays) {
+      final routine = List<Map<String, dynamic>>.from(
+        WorkoutData.weeklyRoutine[day] ?? [],
+      );
+      for (final exercise in routine) {
+        final part = exercise['bodyPart'] as String?;
+        if (part != null && part.isNotEmpty) {
+          bodyPartCounts[part] = (bodyPartCounts[part] ?? 0) + 1;
+        }
+      }
+    }
+    final bodyParts = bodyPartCounts.keys.toList();
+    final bodyPartValues = bodyParts
+        .map((p) => bodyPartCounts[p] ?? 0)
+        .toList();
 
     return Stack(
       children: [
@@ -783,6 +916,7 @@ class _GymDashboardState extends State<GymDashboard> {
                   ],
                 ),
               ),
+              // Chart removed since WeeklyBarChart is no longer available
               // Remove extra vertical space here
             ],
           ),
@@ -835,5 +969,28 @@ class _GymDashboardState extends State<GymDashboard> {
         ),
       ),
     );
+  }
+
+  String getWaterValue() {
+    if (widget.useMetric) {
+      return "2.0 L";
+    } else {
+      // 2.0 L = 67.6 oz
+      return "67.6 oz";
+    }
+  }
+
+  void resetProgress() {
+    setState(() {
+      weeklyCompletedExercises.clear();
+      weeklySteps.clear();
+      weeklyCalories.clear();
+      weeklyWorkoutMinutes.clear();
+      completedExercises.clear();
+      steps = 0;
+      calories = 0;
+      workoutMinutes = 0;
+      showCongrats = false;
+    });
   }
 }
