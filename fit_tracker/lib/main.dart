@@ -385,34 +385,34 @@ class _GymDashboardState extends State<GymDashboard> {
                       _buildWeeklyScreen(context),
                     ],
                   )
-                : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.fitness_center,
-                          color: primaryColor,
-                          size: 100,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          "Ready to Crush It?",
-                          style: GoogleFonts.bebasNeue(
-                            fontSize: 36,
-                            color: textColor,
-                            letterSpacing: 1.5,
+                : Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/start.jpg'),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Your daily gym plan awaits.",
-                          style: GoogleFonts.robotoCondensed(
-                            fontSize: 16,
-                            color: textColor.withOpacity(0.7),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.6),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 40),
-                        ElevatedButton(
+                      ),
+                      // START button at about 75% height
+                      Align(
+                        alignment: const Alignment(0, 0.75),
+                        child: ElevatedButton(
                           onPressed: () {
                             setState(() {
                               started = true;
@@ -427,8 +427,8 @@ class _GymDashboardState extends State<GymDashboard> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            elevation: 10,
-                            shadowColor: primaryColor.withOpacity(0.5),
+                            elevation: 16,
+                            shadowColor: Colors.black.withOpacity(0.6),
                           ),
                           child: const Text(
                             "START",
@@ -437,11 +437,18 @@ class _GymDashboardState extends State<GymDashboard> {
                               letterSpacing: 2,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 8,
+                                  color: Colors.black54,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
           ),
           // Confetti and congrats overlay
