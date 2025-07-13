@@ -73,11 +73,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: widget.useMetric,
                 onChanged: (val) {
                   widget.onSetUnits(val);
+                  Navigator.of(
+                    context,
+                  ).pop(); // Close settings to force refresh
                 },
                 activeColor: primaryColor,
               ),
               onTap: () {
                 widget.onSetUnits(!widget.useMetric);
+                Navigator.of(context).pop(); // Close settings to force refresh
               },
             ),
           ),

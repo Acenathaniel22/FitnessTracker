@@ -593,6 +593,21 @@ class _GymDashboardState extends State<GymDashboard> {
     final cardColor = ThemeColors.getCardColor(isDark);
     final textColor = ThemeColors.getTextColor(isDark);
 
+    final totalWeight = routine
+        .where(
+          (e) =>
+              completedExercises.contains(e['label']) &&
+              e.containsKey('weight'),
+        )
+        .fold<int>(0, (sum, e) => sum + ((e['weight'] ?? 0) as int));
+    final totalDistance = routine
+        .where(
+          (e) =>
+              completedExercises.contains(e['label']) &&
+              e.containsKey('distance'),
+        )
+        .fold<int>(0, (sum, e) => sum + ((e['distance'] ?? 0) as int));
+
     return Stack(
       children: [
         Container(
@@ -666,6 +681,22 @@ class _GymDashboardState extends State<GymDashboard> {
                   letterSpacing: 1.5,
                 ),
               ),
+              if (!isRestDay) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Target: ' +
+                      routine
+                          .map((exercise) => exercise['bodyPart'] as String?)
+                          .where((part) => part != null && part.isNotEmpty)
+                          .toSet()
+                          .join(', '),
+                  style: GoogleFonts.robotoCondensed(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               if (isRestDay) ...[
                 Center(
@@ -736,6 +767,7 @@ class _GymDashboardState extends State<GymDashboard> {
                     textColor: textColor,
                     cardColor: cardColor,
                     primaryColor: primaryColor,
+                    bodyPart: exercise['bodyPart'] as String?,
                   );
                 }),
               ],
@@ -753,16 +785,17 @@ class _GymDashboardState extends State<GymDashboard> {
               Row(
                 children: [
                   FitnessStatCard(
-                    label: "Steps",
-                    value: steps.toString(),
-                    icon: Icons.directions_walk,
+                    label: "Completed",
+                    value: "${completedExercises.length}/${routine.length}",
+                    icon: Icons.check_circle,
                     textColor: textColor,
                     cardColor: cardColor,
                     primaryColor: primaryColor,
                   ),
                   FitnessStatCard(
                     label: "Calories",
-                    value: "$calories kcal",
+                    value:
+                        "${(routine.where((e) => completedExercises.contains(e['label'])).fold<int>(0, (sum, e) => sum + ((e['calories'] ?? 0) as int)))} kcal",
                     icon: Icons.local_fire_department,
                     textColor: textColor,
                     cardColor: cardColor,
@@ -774,17 +807,44 @@ class _GymDashboardState extends State<GymDashboard> {
               Row(
                 children: [
                   FitnessStatCard(
-                    label: "Water",
-                    value: getWaterValue(),
-                    icon: Icons.water_drop,
+                    label: "Workout",
+                    value:
+                        "${(routine.where((e) => completedExercises.contains(e['label'])).fold<int>(0, (sum, e) => sum + ((e['workout'] ?? 0) as int)))}m",
+                    icon: Icons.timer,
                     textColor: textColor,
                     cardColor: cardColor,
                     primaryColor: primaryColor,
                   ),
                   FitnessStatCard(
-                    label: "Workout",
-                    value: "${workoutMinutes}m",
-                    icon: Icons.timer,
+                    label: "Steps",
+                    value:
+                        "${(routine.where((e) => completedExercises.contains(e['label']) && (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs')).fold<int>(0, (sum, e) => sum + ((e['steps'] ?? 0) as int)))}",
+                    icon: Icons.directions_walk,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  FitnessStatCard(
+                    label: "Weight",
+                    value: widget.useMetric
+                        ? "$totalWeight kg"
+                        : "${(totalWeight * 2.20462).toStringAsFixed(1)} lb",
+                    icon: Icons.fitness_center,
+                    textColor: textColor,
+                    cardColor: cardColor,
+                    primaryColor: primaryColor,
+                  ),
+                  FitnessStatCard(
+                    label: "Distance",
+                    value: widget.useMetric
+                        ? "$totalDistance km"
+                        : "${(totalDistance * 0.621371).toStringAsFixed(2)} mi",
+                    icon: Icons.directions_run,
                     textColor: textColor,
                     cardColor: cardColor,
                     primaryColor: primaryColor,
