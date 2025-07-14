@@ -25,7 +25,6 @@ class GymDashboardApp extends StatefulWidget {
 
 class _GymDashboardAppState extends State<GymDashboardApp> {
   ThemeMode _themeMode = ThemeMode.dark;
-  bool _useMetric = true;
   bool _loggedIn = false;
 
   void _toggleTheme() {
@@ -33,12 +32,6 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
       _themeMode = _themeMode == ThemeMode.dark
           ? ThemeMode.light
           : ThemeMode.dark;
-    });
-  }
-
-  void _setUnits(bool useMetric) {
-    setState(() {
-      _useMetric = useMetric;
     });
   }
 
@@ -134,8 +127,6 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
               onToggleTheme: _toggleTheme,
               themeMode: _themeMode,
               onResetProgress: _resetProgress,
-              useMetric: _useMetric,
-              onSetUnits: _setUnits,
             )
           : LoginScreen(onLogin: _login),
     );
@@ -146,15 +137,11 @@ class GymDashboard extends StatefulWidget {
   final VoidCallback onToggleTheme;
   final ThemeMode themeMode;
   final VoidCallback onResetProgress;
-  final bool useMetric;
-  final ValueChanged<bool> onSetUnits;
   const GymDashboard({
     Key? key,
     required this.onToggleTheme,
     required this.themeMode,
     required this.onResetProgress,
-    required this.useMetric,
-    required this.onSetUnits,
   }) : super(key: key);
 
   @override
@@ -353,8 +340,6 @@ class _GymDashboardState extends State<GymDashboard> {
                           themeMode: widget.themeMode,
                           onToggleTheme: widget.onToggleTheme,
                           onResetProgress: widget.onResetProgress,
-                          useMetric: widget.useMetric,
-                          onSetUnits: widget.onSetUnits,
                         ),
                       ),
                     );
@@ -593,21 +578,6 @@ class _GymDashboardState extends State<GymDashboard> {
     final cardColor = ThemeColors.getCardColor(isDark);
     final textColor = ThemeColors.getTextColor(isDark);
 
-    final totalWeight = routine
-        .where(
-          (e) =>
-              completedExercises.contains(e['label']) &&
-              e.containsKey('weight'),
-        )
-        .fold<int>(0, (sum, e) => sum + ((e['weight'] ?? 0) as int));
-    final totalDistance = routine
-        .where(
-          (e) =>
-              completedExercises.contains(e['label']) &&
-              e.containsKey('distance'),
-        )
-        .fold<int>(0, (sum, e) => sum + ((e['distance'] ?? 0) as int));
-
     return Stack(
       children: [
         Container(
@@ -826,31 +796,6 @@ class _GymDashboardState extends State<GymDashboard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  FitnessStatCard(
-                    label: "Weight",
-                    value: widget.useMetric
-                        ? "$totalWeight kg"
-                        : "${(totalWeight * 2.20462).toStringAsFixed(1)} lb",
-                    icon: Icons.fitness_center,
-                    textColor: textColor,
-                    cardColor: cardColor,
-                    primaryColor: primaryColor,
-                  ),
-                  FitnessStatCard(
-                    label: "Distance",
-                    value: widget.useMetric
-                        ? "$totalDistance km"
-                        : "${(totalDistance * 0.621371).toStringAsFixed(2)} mi",
-                    icon: Icons.directions_run,
-                    textColor: textColor,
-                    cardColor: cardColor,
-                    primaryColor: primaryColor,
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -1036,15 +981,6 @@ class _GymDashboardState extends State<GymDashboard> {
         ),
       ),
     );
-  }
-
-  String getWaterValue() {
-    if (widget.useMetric) {
-      return "2.0 L";
-    } else {
-      // 2.0 L = 67.6 oz
-      return "67.6 oz";
-    }
   }
 
   void resetProgress() {

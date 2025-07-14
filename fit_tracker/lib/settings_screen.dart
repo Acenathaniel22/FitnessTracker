@@ -5,16 +5,12 @@ class SettingsScreen extends StatefulWidget {
   final ThemeMode themeMode;
   final VoidCallback onToggleTheme;
   final VoidCallback onResetProgress;
-  final bool useMetric;
-  final ValueChanged<bool> onSetUnits;
 
   const SettingsScreen({
     Key? key,
     required this.themeMode,
     required this.onToggleTheme,
     required this.onResetProgress,
-    required this.useMetric,
-    required this.onSetUnits,
   }) : super(key: key);
 
   @override
@@ -57,32 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 activeColor: primaryColor,
               ),
               onTap: widget.onToggleTheme,
-            ),
-          ),
-          const Divider(height: 0),
-          Container(
-            color: cardColor,
-            child: ListTile(
-              leading: Icon(Icons.straighten, color: primaryColor),
-              title: Text('Units', style: TextStyle(color: textColor)),
-              subtitle: Text(
-                widget.useMetric ? 'Metric (kg, km)' : 'Imperial (lbs, miles)',
-                style: TextStyle(color: ThemeColors.getMutedTextColor(isDark)),
-              ),
-              trailing: Switch(
-                value: widget.useMetric,
-                onChanged: (val) {
-                  widget.onSetUnits(val);
-                  Navigator.of(
-                    context,
-                  ).pop(); // Close settings to force refresh
-                },
-                activeColor: primaryColor,
-              ),
-              onTap: () {
-                widget.onSetUnits(!widget.useMetric);
-                Navigator.of(context).pop(); // Close settings to force refresh
-              },
             ),
           ),
           const Divider(height: 0),
