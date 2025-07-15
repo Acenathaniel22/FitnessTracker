@@ -12,6 +12,7 @@ class RoutineTile extends StatelessWidget {
   final Color? cardColor;
   final Color primaryColor;
   final String? bodyPart;
+  final VoidCallback? onSelectTime; // NEW
 
   const RoutineTile({
     super.key,
@@ -24,6 +25,7 @@ class RoutineTile extends StatelessWidget {
     required this.cardColor,
     required this.primaryColor,
     this.bodyPart,
+    this.onSelectTime,
   });
 
   @override
@@ -90,6 +92,13 @@ class RoutineTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (!isDone && onSelectTime != null)
+                IconButton(
+                  icon: const Icon(Icons.access_time, size: 22),
+                  color: primaryColor,
+                  tooltip: 'Set Timer',
+                  onPressed: onSelectTime,
+                ),
               if (isDone)
                 const Padding(
                   padding: EdgeInsets.only(right: 8.0),

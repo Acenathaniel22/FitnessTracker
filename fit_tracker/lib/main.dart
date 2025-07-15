@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/services.dart';
+import 'dart:math'; // For number picker
 
 // Import separated components
 import 'widgets/routine_tile.dart';
@@ -11,6 +12,15 @@ import 'data/workout_data.dart';
 import 'utils/theme_colors.dart';
 import 'settings_screen.dart'; // <-- Add this import
 import 'login_screen.dart';
+import 'widgets/dialogs.dart';
+import 'utils/exercise_constants.dart';
+
+// Helper to format seconds as Xm Ys
+String formatMinutesSeconds(int totalSeconds) {
+  final m = totalSeconds ~/ 60;
+  final s = totalSeconds % 60;
+  return '${m}m ${s}s';
+}
 
 void main() {
   runApp(GymDashboardApp());
@@ -150,6 +160,7 @@ class GymDashboard extends StatefulWidget {
 
 class _GymDashboardState extends State<GymDashboard> {
   bool started = false;
+  bool isLoading = false; // For START button
   String selectedDay = WorkoutData.getTodayName();
 
   // Weekly tracking data
@@ -157,12 +168,17 @@ class _GymDashboardState extends State<GymDashboard> {
   Map<String, int> weeklySteps = {};
   Map<String, int> weeklyCalories = {};
   Map<String, int> weeklyWorkoutMinutes = {};
+  Map<String, Map<String, int>> weeklyWorkoutSeconds =
+      {}; // NEW: day -> {exerciseLabel: secondsSpent}
 
   // Current day tracking
   Set<String> completedExercises = {};
   int steps = 0;
   int calories = 0;
   int workoutMinutes = 0;
+
+  // Store custom exercises for today only
+  List<Map<String, dynamic>> customExercises = [];
 
   final ConfettiController _confettiController = ConfettiController(
     duration: const Duration(seconds: 3),
@@ -177,12 +193,17 @@ class _GymDashboardState extends State<GymDashboard> {
     weeklySteps[day] ??= 0;
     weeklyCalories[day] ??= 0;
     weeklyWorkoutMinutes[day] ??= 0;
+    weeklyWorkoutSeconds[day] ??= {}; // NEW
 
     // Load current day's data
     completedExercises = Set.from(weeklyCompletedExercises[day] ?? {});
     steps = weeklySteps[day] ?? 0;
     calories = weeklyCalories[day] ?? 0;
-    workoutMinutes = weeklyWorkoutMinutes[day] ?? 0;
+    workoutMinutes =
+        ((weeklyWorkoutSeconds[day]?.values.fold<int>(0, (sum, s) => sum + s) ??
+                    0) /
+                60)
+            .ceil(); // NEW: real time
   }
 
   // Save current day's data
@@ -191,31 +212,53 @@ class _GymDashboardState extends State<GymDashboard> {
     weeklySteps[selectedDay] = steps;
     weeklyCalories[selectedDay] = calories;
     weeklyWorkoutMinutes[selectedDay] = workoutMinutes;
+    // weeklyWorkoutSeconds is updated live
   }
 
   // Get weekly totals
   Map<String, int> get _weeklyTotals {
     int totalSteps = 0;
     int totalCalories = 0;
-    int totalWorkoutMinutes = 0;
+    int totalWorkoutSeconds = 0; // CHANGED
     int totalCompletedExercises = 0;
 
     for (String day in weeklyCompletedExercises.keys) {
-      totalSteps += weeklySteps[day] ?? 0;
-      totalCalories += weeklyCalories[day] ?? 0;
-      totalWorkoutMinutes += weeklyWorkoutMinutes[day] ?? 0;
-      totalCompletedExercises += weeklyCompletedExercises[day]?.length ?? 0;
+      // Get the routine for the day
+      final routine = List<Map<String, dynamic>>.from(
+        WorkoutData.weeklyRoutine[day] ?? [],
+      );
+      final completed = weeklyCompletedExercises[day] ?? {};
+      // Steps: only for completed exercises with bodyPart Cardio or Legs
+      totalSteps += routine
+          .where(
+            (e) =>
+                completed.contains(e['label']) &&
+                (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs'),
+          )
+          .fold<int>(0, (sum, e) => sum + ((e['steps'] ?? 0) as int));
+      // Calories: sum for all completed exercises
+      totalCalories += routine
+          .where((e) => completed.contains(e['label']))
+          .fold<int>(0, (sum, e) => sum + ((e['calories'] ?? 0) as int));
+      // Workout seconds: sum real time spent for all completed exercises
+      final workoutSecondsMap = weeklyWorkoutSeconds[day] ?? {};
+      totalWorkoutSeconds += workoutSecondsMap.values.fold<int>(
+        0,
+        (sum, s) => sum + s,
+      );
+      // Completed exercises count
+      totalCompletedExercises += completed.length;
     }
 
     return {
       'steps': totalSteps,
       'calories': totalCalories,
-      'workoutMinutes': totalWorkoutMinutes,
+      'workoutSeconds': totalWorkoutSeconds, // CHANGED
       'completedExercises': totalCompletedExercises,
     };
   }
 
-  void _showTimerDialog(String label, int duration) async {
+  void _showTimerDialog(String label, int defaultDuration) async {
     final routine = List<Map<String, dynamic>>.from(
       WorkoutData.weeklyRoutine[selectedDay] ?? [],
     );
@@ -234,18 +277,35 @@ class _GymDashboardState extends State<GymDashboard> {
       _saveDayData();
       return;
     }
+    // Show preset dialog first
+    final pickedDuration = await showDurationPresetDialog(
+      context,
+      defaultDuration,
+    );
+    if (pickedDuration == null) return; // User cancelled
     final secondsSpent = await showDialog<int>(
       context: context,
       builder: (context) =>
-          TimerDialog(exerciseLabel: label, duration: duration),
+          TimerDialog(exerciseLabel: label, duration: pickedDuration),
     );
-    // Only mark as done if timer completed (secondsSpent >= duration)
-    if (secondsSpent != null && secondsSpent >= duration) {
+    // Only mark as done if timer completed (secondsSpent >= pickedDuration)
+    if (secondsSpent != null && secondsSpent >= pickedDuration) {
       setState(() {
         completedExercises.add(label);
         steps += (exercise['steps'] ?? 0) as int;
         calories += (exercise['calories'] ?? 0) as int;
-        workoutMinutes += (secondsSpent / 60).ceil();
+        // Save real time spent for this exercise
+        weeklyWorkoutSeconds[selectedDay] ??= {};
+        weeklyWorkoutSeconds[selectedDay]![label] = secondsSpent;
+        // Update workoutMinutes for today (for legacy code)
+        workoutMinutes =
+            ((weeklyWorkoutSeconds[selectedDay]?.values.fold<int>(
+                          0,
+                          (sum, s) => sum + s,
+                        ) ??
+                        0) /
+                    60)
+                .ceil();
         // Check if all exercises are done (not rest day)
         if (selectedDay != 'Saturday' &&
             completedExercises.length == routine.length) {
@@ -255,7 +315,7 @@ class _GymDashboardState extends State<GymDashboard> {
       });
       _saveDayData();
     } else if (secondsSpent == -1 ||
-        (secondsSpent != null && secondsSpent < duration)) {
+        (secondsSpent != null && secondsSpent < pickedDuration)) {
       // Show motivational dialog if user quits early
       showDialog(
         context: context,
@@ -278,6 +338,15 @@ class _GymDashboardState extends State<GymDashboard> {
   @override
   void initState() {
     super.initState();
+    if (!started) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          setState(() {
+            started = true;
+          });
+        }
+      });
+    }
     _initializeDayData(selectedDay);
   }
 
@@ -397,39 +466,14 @@ class _GymDashboardState extends State<GymDashboard> {
                       // START button at about 75% height
                       Align(
                         alignment: const Alignment(0, 0.75),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              started = true;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 18,
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 16,
-                            shadowColor: Colors.black.withOpacity(0.6),
-                          ),
-                          child: const Text(
-                            "START",
-                            style: TextStyle(
-                              fontSize: 22,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 8,
-                                  color: Colors.black54,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
+                            strokeWidth: 5,
                           ),
                         ),
                       ),
@@ -563,9 +607,12 @@ class _GymDashboardState extends State<GymDashboard> {
   }
 
   Widget _buildTodayScreen(BuildContext context) {
-    final routine = List<Map<String, dynamic>>.from(
-      WorkoutData.weeklyRoutine[selectedDay] ?? [],
-    );
+    final routine = [
+      ...List<Map<String, dynamic>>.from(
+        WorkoutData.weeklyRoutine[selectedDay] ?? [],
+      ),
+      ...customExercises,
+    ];
     final isRestDay = selectedDay == 'Saturday';
     final randomQuote = (List<String>.from(
       WorkoutData.restDayQuotes,
@@ -577,6 +624,14 @@ class _GymDashboardState extends State<GymDashboard> {
     final accentColor = ThemeColors.getAccentColor(isDark);
     final cardColor = ThemeColors.getCardColor(isDark);
     final textColor = ThemeColors.getTextColor(isDark);
+
+    // NEW: Calculate total workout seconds for today
+    final totalWorkoutSeconds =
+        (weeklyWorkoutSeconds[selectedDay]?.values.fold<int>(
+          0,
+          (sum, s) => sum + s,
+        ) ??
+        0);
 
     return Stack(
       children: [
@@ -723,6 +778,37 @@ class _GymDashboardState extends State<GymDashboard> {
                     ),
                   ),
                 ],
+                // Add Exercise Button
+                if (!isRestDay)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Exercise'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final newExercise = await showAddExerciseDialog(
+                          context,
+                          bodyPart: selectedDay == 'Saturday'
+                              ? ''
+                              : routine.isNotEmpty
+                              ? routine.first['bodyPart'] ?? ''
+                              : '',
+                        );
+                        if (newExercise != null) {
+                          setState(() {
+                            customExercises.add(newExercise);
+                          });
+                        }
+                      },
+                    ),
+                  ),
                 ...routine.map((exercise) {
                   final isDone = completedExercises.contains(exercise['label']);
                   final duration = exercise['duration'] ?? 60;
@@ -738,6 +824,9 @@ class _GymDashboardState extends State<GymDashboard> {
                     cardColor: cardColor,
                     primaryColor: primaryColor,
                     bodyPart: exercise['bodyPart'] as String?,
+                    onSelectTime: isDone
+                        ? null
+                        : () => _showTimerDialog(exercise['label'], duration),
                   );
                 }),
               ],
@@ -778,8 +867,7 @@ class _GymDashboardState extends State<GymDashboard> {
                 children: [
                   FitnessStatCard(
                     label: "Workout",
-                    value:
-                        "${(routine.where((e) => completedExercises.contains(e['label'])).fold<int>(0, (sum, e) => sum + ((e['workout'] ?? 0) as int)))}m",
+                    value: formatMinutesSeconds(totalWorkoutSeconds),
                     icon: Icons.timer,
                     textColor: textColor,
                     cardColor: cardColor,
@@ -830,6 +918,9 @@ class _GymDashboardState extends State<GymDashboard> {
     final bodyPartValues = bodyParts
         .map((p) => bodyPartCounts[p] ?? 0)
         .toList();
+
+    // NEW: Get total workout seconds for the week
+    final totalWorkoutSeconds = _weeklyTotals['workoutSeconds'] ?? 0;
 
     return Stack(
       children: [
@@ -911,7 +1002,7 @@ class _GymDashboardState extends State<GymDashboard> {
                       children: [
                         _buildWeeklyStatCard(
                           "Workout",
-                          "${_weeklyTotals['workoutMinutes']}m",
+                          formatMinutesSeconds(totalWorkoutSeconds),
                           Icons.timer,
                           textColor,
                           primaryColor,
@@ -989,6 +1080,7 @@ class _GymDashboardState extends State<GymDashboard> {
       weeklySteps.clear();
       weeklyCalories.clear();
       weeklyWorkoutMinutes.clear();
+      weeklyWorkoutSeconds.clear(); // NEW
       completedExercises.clear();
       steps = 0;
       calories = 0;
