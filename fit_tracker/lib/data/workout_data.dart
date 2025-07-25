@@ -10,6 +10,8 @@ class WorkoutData {
         'steps': 1200,
         'calories': 80,
         'workout': 10,
+        'bodyPart': 'Cardio',
+        'distance': 1, // 1 km
       },
       {
         'label': "Bench Press - 4 Sets",
@@ -18,6 +20,8 @@ class WorkoutData {
         'steps': 100,
         'calories': 50,
         'workout': 3,
+        'bodyPart': 'Chest',
+        'weight': 50, // 50 kg
       },
       {
         'label': "Tricep Pushdowns - 3 Sets",
@@ -26,6 +30,8 @@ class WorkoutData {
         'steps': 80,
         'calories': 30,
         'workout': 2,
+        'bodyPart': 'Arms',
+        'weight': 30, // 30 kg
       },
     ],
     'Tuesday': [
@@ -36,6 +42,7 @@ class WorkoutData {
         'steps': 60,
         'calories': 25,
         'workout': 2,
+        'bodyPart': 'Back',
       },
       {
         'label': "Deadlifts - 4 Sets",
@@ -44,6 +51,7 @@ class WorkoutData {
         'steps': 90,
         'calories': 60,
         'workout': 3,
+        'bodyPart': 'Back',
       },
       {
         'label': "Barbell Rows - 3 Sets",
@@ -52,6 +60,7 @@ class WorkoutData {
         'steps': 70,
         'calories': 35,
         'workout': 2,
+        'bodyPart': 'Back',
       },
     ],
     'Wednesday': [
@@ -62,6 +71,7 @@ class WorkoutData {
         'steps': 110,
         'calories': 55,
         'workout': 3,
+        'bodyPart': 'Legs',
       },
       {
         'label': "Lunges - 3 Sets",
@@ -70,6 +80,7 @@ class WorkoutData {
         'steps': 90,
         'calories': 30,
         'workout': 2,
+        'bodyPart': 'Legs',
       },
       {
         'label': "Leg Curls - 3 Sets",
@@ -78,6 +89,7 @@ class WorkoutData {
         'steps': 60,
         'calories': 25,
         'workout': 2,
+        'bodyPart': 'Legs',
       },
     ],
     'Thursday': [
@@ -88,6 +100,7 @@ class WorkoutData {
         'steps': 60,
         'calories': 40,
         'workout': 3,
+        'bodyPart': 'Shoulders',
       },
       {
         'label': "Lateral Raises - 3 Sets",
@@ -96,6 +109,7 @@ class WorkoutData {
         'steps': 40,
         'calories': 20,
         'workout': 2,
+        'bodyPart': 'Shoulders',
       },
       {
         'label': "Front Raises - 3 Sets",
@@ -104,6 +118,7 @@ class WorkoutData {
         'steps': 40,
         'calories': 20,
         'workout': 2,
+        'bodyPart': 'Shoulders',
       },
     ],
     'Friday': [
@@ -114,6 +129,7 @@ class WorkoutData {
         'steps': 60,
         'calories': 45,
         'workout': 3,
+        'bodyPart': 'Chest',
       },
       {
         'label': "Pushups - 3 Sets",
@@ -122,6 +138,7 @@ class WorkoutData {
         'steps': 50,
         'calories': 20,
         'workout': 2,
+        'bodyPart': 'Chest',
       },
       {
         'label': "Tricep Dips - 3 Sets",
@@ -130,6 +147,7 @@ class WorkoutData {
         'steps': 50,
         'calories': 20,
         'workout': 2,
+        'bodyPart': 'Arms',
       },
     ],
     'Saturday': [
@@ -140,16 +158,20 @@ class WorkoutData {
         'steps': 0,
         'calories': 0,
         'workout': 0,
+        'bodyPart': 'Full Body',
       },
     ],
     'Sunday': [
       {
-        'label': "Cardio: 20 min",
+        'label': "Cardio", // Removed '20 min' from label
         'icon': Icons.directions_run,
-        'duration': 10,
-        'steps': 2500,
+        'duration': 20, // Default to 20 minutes for better step calculation
+        // Steps will be calculated as 125 steps per minute dynamically in the UI
+        // 'steps': 2500, // Remove static steps
         'calories': 180,
         'workout': 20,
+        'bodyPart': 'Cardio',
+        'distance': 2, // 2 km
       },
       {
         'label': "Abs Workout - 3 Sets",
@@ -158,6 +180,7 @@ class WorkoutData {
         'steps': 40,
         'calories': 25,
         'workout': 2,
+        'bodyPart': 'Core',
       },
       {
         'label': "Planks - 3 Sets",
@@ -166,6 +189,7 @@ class WorkoutData {
         'steps': 20,
         'calories': 15,
         'workout': 3,
+        'bodyPart': 'Core',
       },
     ],
   };

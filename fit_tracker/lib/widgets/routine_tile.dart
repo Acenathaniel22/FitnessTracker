@@ -11,6 +11,8 @@ class RoutineTile extends StatelessWidget {
   final Color textColor;
   final Color? cardColor;
   final Color primaryColor;
+  final String? bodyPart;
+  final VoidCallback? onSelectTime; // NEW
 
   const RoutineTile({
     super.key,
@@ -22,6 +24,8 @@ class RoutineTile extends StatelessWidget {
     required this.textColor,
     required this.cardColor,
     required this.primaryColor,
+    this.bodyPart,
+    this.onSelectTime,
   });
 
   @override
@@ -66,15 +70,35 @@ class RoutineTile extends StatelessWidget {
               Icon(icon, color: textColor, size: 26),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.robotoCondensed(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: GoogleFonts.robotoCondensed(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    if (bodyPart != null && bodyPart!.isNotEmpty)
+                      Text(
+                        bodyPart!,
+                        style: GoogleFonts.robotoCondensed(
+                          fontSize: 13,
+                          color: textColor.withOpacity(0.7),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              if (!isDone && onSelectTime != null)
+                IconButton(
+                  icon: const Icon(Icons.access_time, size: 22),
+                  color: primaryColor,
+                  tooltip: 'Set Timer',
+                  onPressed: onSelectTime,
+                ),
               if (isDone)
                 const Padding(
                   padding: EdgeInsets.only(right: 8.0),
