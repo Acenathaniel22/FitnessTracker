@@ -292,7 +292,13 @@ class _GymDashboardState extends State<GymDashboard> {
     if (secondsSpent != null && secondsSpent >= pickedDuration) {
       setState(() {
         completedExercises.add(label);
-        steps += (exercise['steps'] ?? 0) as int;
+        // Dynamic steps for Cardio
+        if ((exercise['bodyPart'] == 'Cardio' || label == 'Cardio')) {
+          int cardioSteps = ((pickedDuration / 60) * 125).round();
+          steps += cardioSteps;
+        } else {
+          steps += (exercise['steps'] ?? 0) as int;
+        }
         calories += (exercise['calories'] ?? 0) as int;
         // Save real time spent for this exercise
         weeklyWorkoutSeconds[selectedDay] ??= {};
@@ -876,7 +882,14 @@ class _GymDashboardState extends State<GymDashboard> {
                   FitnessStatCard(
                     label: "Steps",
                     value:
-                        "${(routine.where((e) => completedExercises.contains(e['label']) && (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs')).fold<int>(0, (sum, e) => sum + ((e['steps'] ?? 0) as int)))}",
+                        "${routine.where((e) => completedExercises.contains(e['label']) && (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs')).fold<int>(0, (sum, e) {
+                          if (e['bodyPart'] == 'Cardio' || e['label'] == 'Cardio') {
+                            int duration = e['duration'] ?? 20;
+                            return sum + ((duration) * 125);
+                          } else {
+                            return sum + ((e['steps'] ?? 0) as int);
+                          }
+                        })}",
                     icon: Icons.directions_walk,
                     textColor: textColor,
                     cardColor: cardColor,

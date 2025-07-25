@@ -163,10 +163,11 @@ class WorkoutData {
     ],
     'Sunday': [
       {
-        'label': "Cardio: 20 min",
+        'label': "Cardio", // Removed '20 min' from label
         'icon': Icons.directions_run,
-        'duration': 10,
-        'steps': 2500,
+        'duration': 20, // Default to 20 minutes for better step calculation
+        // Steps will be calculated as 125 steps per minute dynamically in the UI
+        // 'steps': 2500, // Remove static steps
         'calories': 180,
         'workout': 20,
         'bodyPart': 'Cardio',
