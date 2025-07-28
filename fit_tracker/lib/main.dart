@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/services.dart';
-import 'dart:math'; // For number picker
 
 // Import separated components
 import 'widgets/routine_tile.dart';
@@ -245,7 +244,20 @@ class _GymDashboardState extends State<GymDashboard> {
                 completed.contains(e['label']) &&
                 (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs'),
           )
-          .fold<int>(0, (sum, e) => sum + ((e['steps'] ?? 0) as int));
+          .fold<int>(0, (sum, e) {
+            final label = e['label'];
+            final bodyPart = e['bodyPart'];
+            int stepsForExercise = 0;
+            if (bodyPart == 'Cardio' || label == 'Cardio') {
+              // Use actual seconds spent if available
+              int secondsSpent =
+                  weeklyWorkoutSeconds[day]?[label] ?? (e['duration'] ?? 0);
+              stepsForExercise = ((secondsSpent / 60) * 125).round();
+            } else {
+              stepsForExercise = (e['steps'] ?? 0) as int;
+            }
+            return sum + stepsForExercise;
+          });
       // Calories: sum for all completed exercises
       totalCalories += routine
           .where((e) => completed.contains(e['label']))
@@ -895,12 +907,17 @@ class _GymDashboardState extends State<GymDashboard> {
                     label: "Steps",
                     value:
                         "${routine.where((e) => completedExercises.contains(e['label']) && (e['bodyPart'] == 'Cardio' || e['bodyPart'] == 'Legs')).fold<int>(0, (sum, e) {
-                          if (e['bodyPart'] == 'Cardio' || e['label'] == 'Cardio') {
-                            int duration = e['duration'] ?? 20;
-                            return sum + ((duration) * 125);
+                          final label = e['label'];
+                          final bodyPart = e['bodyPart'];
+                          int stepsForExercise = 0;
+                          if (bodyPart == 'Cardio' || label == 'Cardio') {
+                            // Use actual seconds spent if available
+                            int secondsSpent = weeklyWorkoutSeconds[selectedDay]?[label] ?? (e['duration'] ?? 0);
+                            stepsForExercise = ((secondsSpent / 60) * 125).round();
                           } else {
-                            return sum + ((e['steps'] ?? 0) as int);
+                            stepsForExercise = (e['steps'] ?? 0) as int;
                           }
+                          return sum + stepsForExercise;
                         })}",
                     icon: Icons.directions_walk,
                     textColor: textColor,
