@@ -12,6 +12,7 @@ import 'data/workout_data.dart';
 import 'utils/theme_colors.dart';
 import 'settings_screen.dart'; // <-- Add this import
 import 'login_screen.dart';
+import 'splash_screen.dart';
 import 'widgets/dialogs.dart';
 import 'utils/exercise_constants.dart';
 
@@ -36,6 +37,7 @@ class GymDashboardApp extends StatefulWidget {
 class _GymDashboardAppState extends State<GymDashboardApp> {
   ThemeMode _themeMode = ThemeMode.dark;
   bool _loggedIn = false;
+  bool _showSplash = true;
 
   void _toggleTheme() {
     setState(() {
@@ -48,6 +50,12 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
   void _login() {
     setState(() {
       _loggedIn = true;
+    });
+  }
+
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
     });
   }
 
@@ -131,7 +139,9 @@ class _GymDashboardAppState extends State<GymDashboardApp> {
         ),
       ),
       themeMode: _themeMode,
-      home: _loggedIn
+      home: _showSplash
+          ? SplashScreen(onSplashComplete: _onSplashComplete)
+          : _loggedIn
           ? GymDashboard(
               key: _dashboardKey,
               onToggleTheme: _toggleTheme,
