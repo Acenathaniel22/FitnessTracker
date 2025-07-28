@@ -101,9 +101,56 @@ Future<int?> showCustomSecondsDialog(
 Future<Map<String, dynamic>?> showAddExerciseDialog(
   BuildContext context, {
   required String bodyPart,
+  required List<Map<String, dynamic>>
+  existingExercises, // NEW: to check for duplicates
 }) async {
   final _formKey = GlobalKey<FormState>();
-  String exerciseName = bodyPartExercises[bodyPart]![0];
+
+  // Filter out exercises that already exist in the current day's routine
+  List<String> availableExercises = bodyPartExercises[bodyPart] ?? [];
+  List<String> existingExerciseLabels = existingExercises
+      .map((e) => e['label'] as String)
+      .toList();
+
+  // Remove exercises that already exist (check for partial matches too)
+  availableExercises = availableExercises.where((exercise) {
+    // Check if this exercise name appears in any existing exercise label
+    return !existingExerciseLabels.any((existing) {
+      // Convert both to lowercase for better matching
+      String existingLower = existing.toLowerCase();
+      String exerciseLower = exercise.toLowerCase();
+
+      // Check for exact matches or if the exercise name is contained in existing label
+      return existingLower.contains(exerciseLower) ||
+          exerciseLower.contains(
+            existingLower.replaceAll(RegExp(r'[^a-zA-Z\s]'), '').trim(),
+          );
+    });
+  }).toList();
+
+  // If no exercises available, show a message
+  if (availableExercises.isEmpty) {
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('No Available Exercises'),
+          content: Text(
+            'All ${bodyPart} exercises are already in your routine for today.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String exerciseName = availableExercises[0];
   IconData icon =
       exerciseRecommendedIcons[exerciseName] ?? customExerciseIcons[0];
   return showDialog<Map<String, dynamic>>(
@@ -141,7 +188,7 @@ Future<Map<String, dynamic>?> showAddExerciseDialog(
                           child: DropdownButton<String>(
                             value: exerciseName,
                             isExpanded: true,
-                            items: bodyPartExercises[bodyPart]!
+                            items: availableExercises
                                 .map(
                                   (ex) => DropdownMenuItem(
                                     value: ex,

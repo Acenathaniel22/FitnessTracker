@@ -4,7 +4,7 @@ class WorkoutData {
   static const Map<String, List<Map<String, dynamic>>> weeklyRoutine = {
     'Monday': [
       {
-        'label': "Warm-up: 10 min treadmill",
+        'label': "Warm-up Treadmill",
         'icon': Icons.directions_run,
         'duration': 10,
         'steps': 1200,
@@ -14,7 +14,7 @@ class WorkoutData {
         'distance': 1, // 1 km
       },
       {
-        'label': "Bench Press - 4 Sets",
+        'label': "Bench Press",
         'icon': Icons.fitness_center,
         'duration': 10,
         'steps': 100,
@@ -24,7 +24,7 @@ class WorkoutData {
         'weight': 50, // 50 kg
       },
       {
-        'label': "Tricep Pushdowns - 3 Sets",
+        'label': "Tricep Pushdowns",
         'icon': Icons.cable,
         'duration': 10,
         'steps': 80,
@@ -36,7 +36,7 @@ class WorkoutData {
     ],
     'Tuesday': [
       {
-        'label': "Pull-ups - 3 Sets",
+        'label': "Pull-ups",
         'icon': Icons.fitness_center,
         'duration': 10,
         'steps': 60,
@@ -45,7 +45,7 @@ class WorkoutData {
         'bodyPart': 'Back',
       },
       {
-        'label': "Deadlifts - 4 Sets",
+        'label': "Deadlifts",
         'icon': Icons.sports_kabaddi,
         'duration': 10,
         'steps': 90,
@@ -54,7 +54,7 @@ class WorkoutData {
         'bodyPart': 'Back',
       },
       {
-        'label': "Barbell Rows - 3 Sets",
+        'label': "Barbell Rows",
         'icon': Icons.cable,
         'duration': 10,
         'steps': 70,
@@ -65,7 +65,7 @@ class WorkoutData {
     ],
     'Wednesday': [
       {
-        'label': "Squats - 4 Sets",
+        'label': "Squats",
         'icon': Icons.directions_run,
         'duration': 10,
         'steps': 110,
@@ -74,7 +74,7 @@ class WorkoutData {
         'bodyPart': 'Legs',
       },
       {
-        'label': "Lunges - 3 Sets",
+        'label': "Lunges",
         'icon': Icons.directions_walk,
         'duration': 10,
         'steps': 90,
@@ -83,7 +83,7 @@ class WorkoutData {
         'bodyPart': 'Legs',
       },
       {
-        'label': "Leg Curls - 3 Sets",
+        'label': "Leg Curls",
         'icon': Icons.fitness_center,
         'duration': 10,
         'steps': 60,
@@ -94,7 +94,7 @@ class WorkoutData {
     ],
     'Thursday': [
       {
-        'label': "Shoulder Press - 4 Sets",
+        'label': "Shoulder Press",
         'icon': Icons.fitness_center,
         'duration': 10,
         'steps': 60,
@@ -103,7 +103,7 @@ class WorkoutData {
         'bodyPart': 'Shoulders',
       },
       {
-        'label': "Lateral Raises - 3 Sets",
+        'label': "Lateral Raises",
         'icon': Icons.trending_up,
         'duration': 10,
         'steps': 40,
@@ -112,7 +112,7 @@ class WorkoutData {
         'bodyPart': 'Shoulders',
       },
       {
-        'label': "Front Raises - 3 Sets",
+        'label': "Front Raises",
         'icon': Icons.trending_up,
         'duration': 10,
         'steps': 40,
@@ -123,7 +123,7 @@ class WorkoutData {
     ],
     'Friday': [
       {
-        'label': "Chest Fly - 4 Sets",
+        'label': "Chest Fly",
         'icon': Icons.sports_mma,
         'duration': 10,
         'steps': 60,
@@ -132,7 +132,7 @@ class WorkoutData {
         'bodyPart': 'Chest',
       },
       {
-        'label': "Pushups - 3 Sets",
+        'label': "Pushups",
         'icon': Icons.accessibility,
         'duration': 10,
         'steps': 50,
@@ -141,7 +141,7 @@ class WorkoutData {
         'bodyPart': 'Chest',
       },
       {
-        'label': "Tricep Dips - 3 Sets",
+        'label': "Tricep Dips",
         'icon': Icons.accessibility,
         'duration': 10,
         'steps': 50,
@@ -163,7 +163,7 @@ class WorkoutData {
     ],
     'Sunday': [
       {
-        'label': "Cardio", // Removed '20 min' from label
+        'label': "Cardio",
         'icon': Icons.directions_run,
         'duration': 20, // Default to 20 minutes for better step calculation
         // Steps will be calculated as 125 steps per minute dynamically in the UI
@@ -174,7 +174,7 @@ class WorkoutData {
         'distance': 2, // 2 km
       },
       {
-        'label': "Abs Workout - 3 Sets",
+        'label': "Abs Workout",
         'icon': Icons.fitness_center,
         'duration': 10,
         'steps': 40,
@@ -183,7 +183,7 @@ class WorkoutData {
         'bodyPart': 'Core',
       },
       {
-        'label': "Planks - 3 Sets",
+        'label': "Planks",
         'icon': Icons.accessibility,
         'duration': 10,
         'steps': 20,

@@ -816,6 +816,8 @@ class _GymDashboardState extends State<GymDashboard> {
                               : routine.isNotEmpty
                               ? routine.first['bodyPart'] ?? ''
                               : '',
+                          existingExercises:
+                              routine, // Pass existing exercises to prevent duplicates
                         );
                         if (newExercise != null) {
                           setState(() {
